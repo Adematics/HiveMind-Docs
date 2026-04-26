@@ -1,0 +1,815 @@
+openapi: 3.1.0
+info:
+  title: Hivemind Public API
+  version: 1.0.0-beta
+  description: |
+    Programmatic access to Hivemind candidates. Server-to-server REST. All
+    endpoints authenticate via a per-company API key minted in
+    Settings → Integrations → API Key.
+
+    ### Conventions
+    - **Auth**: `Authorization: Bearer hk_<companyId>_<secret>`
+    - **Errors**: every non-2xx response uses the standard error envelope (see
+      `ErrorResponse`). Switch on `error.code`, not `error.message`.
+    - **Pagination**: `page` (1-indexed, default 1) + `per_page` (default 50,
+      max 200). Responses include `total`, `total_pages`, `has_more`.
+    - **Idempotency**: write endpoints accept `Idempotency-Key: <uuid v4>`.
+      Same key + same body within 24h → cached response replayed (with
+      `Idempotent-Replay: true` header). Same key + different body → 409.
+    - **Rate limits**: 120 req/min and 10 000 req/day per company. Standard
+      `X-RateLimit-*` headers on every response. 429 includes `Retry-After`.
+    - **Request IDs**: every response carries `X-Request-Id`. Include it in
+      support tickets.
+  contact:
+    name: Hivemind Support
+    url: https://gethivemind.ai
+    email: support@gethivemind.ai
+servers:
+  - url: https://gethivemind.ai
+    description: Production
+  - url: http://localhost:4000
+    description: Local development
+tags:
+  - name: Candidates
+    description: |
+      A Candidate is a person applying or sourced into a Pipeline. The
+      pipeline's automation drives status transitions; integrators typically
+      create candidates and receive updates by polling or via webhooks
+      (planned).
+  - name: Meta
+    description: |
+      Utility endpoints — key validation, server health.
+security:
+  - bearerAuth: []
+paths:
+  /api/public/v1/whoami:
+    get:
+      tags:
+        - Meta
+      summary: Validate the API key
+      description: |
+        Returns the company that owns the calling API key. Use as a smoke
+        test from your integration code — a 200 means the key is live and
+        scoped to the right company.
+      operationId: whoami
+      responses:
+        '200':
+          description: The calling company.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhoamiResponse'
+              example:
+                company_id: 8f3e42a1-b56c-4d7f-90e1-234567890abc
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/public/v1/candidates:
+    get:
+      tags:
+        - Candidates
+      summary: List candidates
+      description: |
+        Returns a paginated list of candidates scoped to the caller's company.
+        All filters are optional and combine with AND semantics.
+      operationId: listCandidates
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+        - $ref: '#/components/parameters/SortParam'
+        - in: query
+          name: pipeline_id
+          schema:
+            type: string
+            format: uuid
+          description: Restrict to a single pipeline.
+        - in: query
+          name: status
+          description: Comma-separated list of statuses (`_in`).
+          schema:
+            type: string
+            example: in_progress,complete
+        - in: query
+          name: email
+          schema:
+            type: string
+            format: email
+        - in: query
+          name: is_hired
+          schema:
+            type: boolean
+        - in: query
+          name: referral_tag
+          schema:
+            type: string
+        - in: query
+          name: current_node_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: phone
+          description: |
+            Best-effort match against `application_metadata.phone`,
+            `phone_number`, `mobile`, `tel`. Accuracy depends on the
+            pipeline's form field naming.
+          schema:
+            type: string
+        - in: query
+          name: created_after
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: created_before
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: last_active_after
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: q
+          description: Case-insensitive substring search across `name` and `email`.
+          schema:
+            type: string
+            maxLength: 256
+      responses:
+        '200':
+          description: A page of candidates.
+          headers:
+            X-RateLimit-Limit-Minute:
+              $ref: '#/components/headers/RateLimitMinute'
+            X-RateLimit-Remaining-Minute:
+              $ref: '#/components/headers/RateLimitRemainingMinute'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Candidates
+      summary: Create a candidate
+      description: |
+        Creates a candidate and enrols them in the specified pipeline. The
+        existing pipeline automation fires immediately (first node handler
+        runs).
+
+        Creation does not pre-check credits. Downstream nodes that consume
+        credits transition the candidate to `status: "pending_credits"` if
+        the company's balance is insufficient — same behavior as candidates
+        submitted through the public application form.
+      operationId: createCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCandidateRequest'
+      responses:
+        '201':
+          description: Candidate created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Pipeline not found or not owned by the caller's company.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: pipeline_not_found
+                  message: Pipeline not found
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          description: Pipeline is not active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: pipeline_inactive
+                  message: Pipeline is not accepting new candidates
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/public/v1/candidates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CandidateId'
+    get:
+      tags:
+        - Candidates
+      summary: Fetch a candidate
+      operationId: getCandidate
+      responses:
+        '200':
+          description: The candidate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CandidateNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags:
+        - Candidates
+      summary: Update a candidate
+      description: |
+        Updates a whitelisted subset of mutable fields. Most candidate state
+        is driven by the pipeline engine and is not externally mutable.
+      operationId: updateCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCandidateRequest'
+      responses:
+        '200':
+          description: Updated candidate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CandidateNotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/public/v1/candidates/{id}/resume:
+    parameters:
+      - $ref: '#/components/parameters/CandidateId'
+    post:
+      tags:
+        - Candidates
+      summary: Upload a candidate's resume
+      description: >
+        Replaces the candidate's resume with the uploaded file. Accepted
+
+        content-types: `application/pdf`, `application/msword`,
+
+        `application/vnd.openxmlformats-officedocument.wordprocessingml.document`,
+
+        `text/plain`. Maximum size 20MB. The returned `resume_url` on the
+
+        Candidate object is a short-lived (15-minute) presigned S3 URL —
+
+        download the file promptly or re-fetch the candidate to mint a fresh
+
+        URL.
+      operationId: uploadCandidateResume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The resume file. Single part named `file`.
+      responses:
+        '200':
+          description: Resume saved; updated candidate returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '400':
+          description: Missing or malformed multipart body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: invalid_request
+                  message: Multipart form-data with a single "file" part is required
+                  details:
+                    field: file
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CandidateNotFound'
+        '413':
+          description: File exceeds 20MB cap.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: invalid_request
+                  message: File too large (20MB limit)
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '415':
+          description: Unsupported content-type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: unsupported_media_type
+                  message: >-
+                    Resume content-type must be one of: application/pdf,
+                    application/msword,
+                    application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+                    text/plain
+                  details:
+                    received: image/png
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: hk_<companyId>_<secret>
+      description: |
+        Per-company API key. Mint via the Hivemind UI under Settings →
+        Integrations → API Key. Format `hk_<32-hex companyId>_<base62 secret>`.
+        Pass as `Authorization: Bearer <key>`. Regenerating in the UI
+        invalidates the previous key immediately.
+  parameters:
+    CandidateId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Candidate UUID.
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-indexed page number.
+    PerPageParam:
+      in: query
+      name: per_page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+      description: Page size.
+    SortParam:
+      in: query
+      name: sort
+      description: |
+        Field + direction. Prefix with `-` for descending. Whitelisted fields:
+        `created_at`, `last_active`, `total_score`. Default `-created_at`.
+      schema:
+        type: string
+        enum:
+          - created_at
+          - '-created_at'
+          - last_active
+          - '-last_active'
+          - total_score
+          - '-total_score'
+        default: '-created_at'
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: |
+        UUID v4. Same key + same body within 24h → cached response replayed
+        with `Idempotent-Replay: true`. Same key + different body → 409.
+  headers:
+    RequestId:
+      description: Server-generated request id; echo when contacting support.
+      schema:
+        type: string
+        example: req_8f3e42a1b56c4d7f90e12345
+    RateLimitMinute:
+      description: Per-minute request budget for this company.
+      schema:
+        type: integer
+        example: 120
+    RateLimitRemainingMinute:
+      description: Requests remaining in the current minute window.
+      schema:
+        type: integer
+        example: 118
+  schemas:
+    Candidate:
+      type: object
+      required:
+        - id
+        - email
+        - is_hired
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+          description: |
+            Lifecycle state driven by the pipeline engine. Common values:
+            `in_progress`, `pending_credits`, `pending_valid_openai_key`,
+            `complete`. Not exhaustive — treat as an opaque string.
+        pipeline_id:
+          type: string
+          format: uuid
+          nullable: true
+        current_node_id:
+          type: string
+          format: uuid
+          nullable: true
+        is_hired:
+          type: boolean
+        referral_tag:
+          type: string
+          nullable: true
+        total_score:
+          type: number
+          nullable: true
+        last_active:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        resume_url:
+          type: string
+          format: uri
+          nullable: true
+          description: |
+            Short-lived (15-minute) pre-signed S3 URL. Download promptly or
+            re-fetch the candidate for a fresh URL. `null` if no resume.
+        application_metadata:
+          $ref: '#/components/schemas/ApplicationMetadata'
+      example:
+        id: 9f1c8e42-4b7d-4ae6-8b3a-2a4f0d7c5e10
+        email: alice@example.com
+        name: Alice Johnson
+        status: in_progress
+        pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
+        current_node_id: 5c2e9d77-8a3b-4f55-bb12-c0e1d3a4b507
+        is_hired: false
+        referral_tag: linkedin-q2-2026
+        total_score: 78.5
+        last_active: '2026-04-23T14:12:00.000Z'
+        created_at: '2026-04-22T09:30:00.000Z'
+        resume_url: >-
+          https://gethivemind-prod.s3.us-west-2.amazonaws.com/files/abc-resume.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=900&...
+        application_metadata:
+          phone: '+15551112222'
+          linkedin_url: https://linkedin.com/in/alice
+          cover_letter: I am excited about this role because…
+          salary_expectations: '120000'
+          work_authorization: us_citizen
+    WhoamiResponse:
+      type: object
+      required:
+        - company_id
+      properties:
+        company_id:
+          type: string
+          format: uuid
+    ApplicationMetadata:
+      type: object
+      nullable: true
+      additionalProperties: true
+      description: |
+        Free-form key/value map captured by the pipeline's application form.
+        Schema varies per pipeline. Common keys: `phone`, `phone_number`,
+        `linkedin_url`, `cover_letter`, `salary_expectations`,
+        `work_authorization`, `location`. Missing fields don't block creation
+        but may cause downstream pipeline steps to fail.
+    CreateCandidateRequest:
+      type: object
+      required:
+        - pipeline_id
+        - email
+        - name
+      properties:
+        pipeline_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          maxLength: 256
+        resume_url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Optional. URL the server can fetch — we download and re-upload to
+            our own bucket. For local files use the
+            `POST /candidates/{id}/resume` multipart endpoint instead.
+        referral_tag:
+          type: string
+          maxLength: 256
+        application_metadata:
+          $ref: '#/components/schemas/ApplicationMetadata'
+      example:
+        pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
+        email: alice@example.com
+        name: Alice Johnson
+        resume_url: https://files.example.com/resumes/alice.pdf
+        referral_tag: linkedin-q2-2026
+        application_metadata:
+          phone: '+15551112222'
+          linkedin_url: https://linkedin.com/in/alice
+          cover_letter: I am excited about this role because…
+    UpdateCandidateRequest:
+      type: object
+      description: At least one mutable field is required.
+      properties:
+        status:
+          type: string
+          enum:
+            - in_progress
+            - pending_credits
+            - pending_valid_openai_key
+            - complete
+        is_hired:
+          type: boolean
+        referral_tag:
+          type: string
+          maxLength: 256
+      example:
+        is_hired: true
+        referral_tag: hired-q2-2026
+    CandidateListResponse:
+      type: object
+      required:
+        - data
+        - page
+        - per_page
+        - total
+        - total_pages
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Candidate'
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 50
+        total:
+          type: integer
+          example: 347
+        total_pages:
+          type: integer
+          example: 7
+        has_more:
+          type: boolean
+      example:
+        data:
+          - id: 9f1c8e42-4b7d-4ae6-8b3a-2a4f0d7c5e10
+            email: alice@example.com
+            name: Alice Johnson
+            status: in_progress
+            pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
+            current_node_id: 5c2e9d77-8a3b-4f55-bb12-c0e1d3a4b507
+            is_hired: false
+            referral_tag: linkedin-q2-2026
+            total_score: 78.5
+            last_active: '2026-04-23T14:12:00.000Z'
+            created_at: '2026-04-22T09:30:00.000Z'
+            resume_url: >-
+              https://gethivemind-prod.s3.us-west-2.amazonaws.com/files/abc-resume.pdf?X-Amz-Expires=900&...
+            application_metadata:
+              phone: '+15551112222'
+              linkedin_url: https://linkedin.com/in/alice
+        page: 1
+        per_page: 50
+        total: 347
+        total_pages: 7
+        has_more: true
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    ErrorBody:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: |
+            Stable enum. Switch on this, not `message`. Documented values:
+            `missing_api_key`, `invalid_api_key`, `invalid_request`,
+            `invalid_filter`, `invalid_status`, `invalid_idempotency_key`,
+            `idempotency_conflict`, `candidate_not_found`,
+            `pipeline_not_found`, `pipeline_inactive`,
+            `unsupported_media_type`, `rate_limited`, `not_found`,
+            `internal_error`.
+        message:
+          type: string
+          description: Human-readable. May be reworded over time.
+        details:
+          type: object
+          additionalProperties: true
+          description: Optional code-specific structured detail.
+        request_id:
+          type: string
+          description: Echoes `X-Request-Id`.
+  responses:
+    BadRequest:
+      description: Malformed request (validation, bad UUID, unknown filter, etc.).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalid_request:
+              summary: Validation failure on a request field
+              value:
+                error:
+                  code: invalid_request
+                  message: email is not a valid email address
+                  details:
+                    field: email
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+            invalid_filter:
+              summary: Unknown query parameter
+              value:
+                error:
+                  code: invalid_filter
+                  message: 'Unknown query parameter(s): foo'
+                  details:
+                    unknown:
+                      - foo
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+            invalid_status:
+              summary: Bad PATCH status value
+              value:
+                error:
+                  code: invalid_status
+                  message: >-
+                    status must be one of: in_progress, pending_credits,
+                    pending_valid_openai_key, complete
+                  details:
+                    field: status
+                    allowed:
+                      - in_progress
+                      - pending_credits
+                      - pending_valid_openai_key
+                      - complete
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+    Unauthorized:
+      description: Missing, malformed, or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_api_key:
+              summary: No Authorization header
+              value:
+                error:
+                  code: missing_api_key
+                  message: Authorization header is missing or malformed
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+            invalid_api_key:
+              summary: Wrong, revoked, or malformed key
+              value:
+                error:
+                  code: invalid_api_key
+                  message: Invalid API key
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+    CandidateNotFound:
+      description: |
+        Candidate not found OR belongs to a different company. We return 404
+        in both cases to avoid leaking row existence across tenants.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: candidate_not_found
+              message: Candidate not found
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    IdempotencyConflict:
+      description: |
+        The provided `Idempotency-Key` was previously used with a different
+        request body.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: idempotency_conflict
+              message: >-
+                This Idempotency-Key was previously used with a different
+                request body
+              details:
+                idempotency_key: 550e8400-e29b-41d4-a716-446655440000
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    RateLimited:
+      description: Rate limit exceeded. Retry after `Retry-After` seconds.
+      headers:
+        Retry-After:
+          description: Seconds until the relevant window resets.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: rate_limited
+              message: Rate limit exceeded
+              details:
+                reason: per_minute
+                retry_after_seconds: 23
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    InternalError:
+      description: Unexpected server-side error. Log the `request_id` and contact support.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: internal_error
+              message: An unexpected error occurred
+              request_id: req_8f3e42a1b56c4d7f90e12345
