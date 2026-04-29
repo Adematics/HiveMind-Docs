@@ -36,6 +36,14 @@ tags:
       pipeline's automation drives status transitions; integrators typically
       create candidates and receive updates by polling or via webhooks
       (planned).
+  - name: Pipelines
+    description: |
+      A Pipeline is a job posting plus its automation graph and application
+      form. Read-only for content (job title, description, location, form
+      schema, nodes); a tight write surface (`name`, `status`) lets ATS
+      integrations pause and rename without touching the UI. Activation is
+      deliberately UI-only because it requires validating the node graph
+      and form configuration.
   - name: Meta
     description: |
       Utility endpoints — key validation, server health.
@@ -282,93 +290,482 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
-  /api/public/v1/candidates/{id}/resume:
+  /api/public/v1/candidates/{id}/rewind:
     parameters:
       - $ref: '#/components/parameters/CandidateId'
     post:
       tags:
         - Candidates
-      summary: Upload a candidate's resume
-      description: >
-        Replaces the candidate's resume with the uploaded file. Accepted
+      summary: Rewind a candidate to an earlier node
+      description: |
+        Move the candidate **backward** in the pipeline to a target node.
+        Deletes the candidate's responses for the target node and every
+        descendant of it (their work past that point is wiped).
 
-        content-types: `application/pdf`, `application/msword`,
+        ### Direction rules
+        - `target_node_id` must be an **ancestor** of the candidate's current
+          node. Trying to rewind to the current node or a node ahead of it
+          returns `422`.
+        - To move forward, use `POST /candidates/:id/fast-forward`.
 
-        `application/vnd.openxmlformats-officedocument.wordprocessingml.document`,
+        ### Side effects
+        - Credits are deducted for the target node's type (the candidate
+          will replay that step).
+        - The candidate receives a "your application has progressed" email
+          unless `notify_candidate: false` is sent.
+        - Pipeline-automation nodes between target and current are **not**
+          re-executed; only `current_node_id` is updated.
 
-        `text/plain`. Maximum size 20MB. The returned `resume_url` on the
-
-        Candidate object is a short-lived (15-minute) presigned S3 URL —
-
-        download the file promptly or re-fetch the candidate to mint a fresh
-
-        URL.
-      operationId: uploadCandidateResume
+        ### Dry run
+        Send `dry_run: true` to preview which responses would be deleted
+        without applying any change.
+      operationId: rewindCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              required:
-                - file
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: The resume file. Single part named `file`.
+              $ref: '#/components/schemas/MoveCandidateRequest'
       responses:
         '200':
-          description: Resume saved; updated candidate returned.
+          description: |
+            Move applied, or — for `dry_run: true` — preview returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Candidate'
+                $ref: '#/components/schemas/MoveCandidateResponse'
         '400':
-          description: Missing or malformed multipart body.
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Insufficient credits to cover the target node's type.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error:
-                  code: invalid_request
-                  message: Multipart form-data with a single "file" part is required
+                  code: insufficient_credits
+                  message: >-
+                    Your company does not have enough credits to perform this
+                    operation.
                   details:
-                    field: file
+                    node_type: assessment
                   request_id: req_8f3e42a1b56c4d7f90e12345
+        '404':
+          description: |
+            Candidate not found OR `target_node_id` does not match a node in
+            the candidate's pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                candidate_not_found:
+                  summary: Unknown / cross-tenant candidate
+                  value:
+                    error:
+                      code: candidate_not_found
+                      message: Candidate not found
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                target_node_not_found:
+                  summary: Target node not in this candidate's pipeline
+                  value:
+                    error:
+                      code: target_node_not_found
+                      message: >-
+                        target_node_id does not match any node in the
+                        candidate's pipeline
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          description: |
+            Disallowed move (see endpoint description).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                target_must_precede_current:
+                  summary: Target is ahead of current — use fast-forward
+                  value:
+                    error:
+                      code: target_must_precede_current
+                      message: >-
+                        For a rewind, target_node_id must be an ancestor of the
+                        candidate's current node. Use POST
+                        /candidates/:id/fast-forward to move the candidate
+                        forward.
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                cannot_move_to_current_node:
+                  summary: Target is the candidate's current node
+                  value:
+                    error:
+                      code: cannot_move_to_current_node
+                      message: >-
+                        target_node_id is the candidate's current node — there
+                        is nowhere to move to.
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                candidate_has_no_current_node:
+                  summary: Candidate hasn't been placed in the pipeline yet
+                  value:
+                    error:
+                      code: candidate_has_no_current_node
+                      message: >-
+                        Candidate has no current node yet — move operations
+                        require an active position in the pipeline.
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/public/v1/candidates/{id}/fast-forward:
+    parameters:
+      - $ref: '#/components/parameters/CandidateId'
+    post:
+      tags:
+        - Candidates
+      summary: Fast-forward a candidate to a later node
+      description: |
+        Move the candidate **forward** in the pipeline to a target node.
+        Existing responses are preserved; the candidate's `current_node_id`
+        is updated and pipeline-automation nodes between current and
+        target are **not** executed (use the UI to replay automation).
+
+        ### Direction rules
+        - `target_node_id` must be a **descendant** of the candidate's
+          current node. Trying to fast-forward to the current node or to a
+          node behind it returns `422`.
+        - To move backward, use `POST /candidates/:id/rewind`.
+
+        ### Side effects
+        - Credits are deducted for the target node's type.
+        - The candidate receives a "your application has progressed" email
+          unless `notify_candidate: false` is sent.
+
+        ### Dry run
+        Send `dry_run: true` to validate the move without applying any
+        change. (Useful even though no responses are deleted, since it
+        also exercises the ordering check.)
+      operationId: fastForwardCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveCandidateRequest'
+      responses:
+        '200':
+          description: |
+            Move applied, or — for `dry_run: true` — preview returned.
+            `deleted_responses` is always `[]` on this endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveCandidateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Insufficient credits to cover the target node's type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: insufficient_credits
+                  message: >-
+                    Your company does not have enough credits to perform this
+                    operation.
+                  details:
+                    node_type: manual_review
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '404':
+          description: |
+            Candidate not found OR `target_node_id` does not match a node in
+            the candidate's pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          description: |
+            Disallowed move — typically `target_must_follow_current` if the
+            target is behind or equal to the current node, or
+            `candidate_has_no_current_node` for a freshly-created candidate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                target_must_follow_current:
+                  summary: Target is behind current — use rewind
+                  value:
+                    error:
+                      code: target_must_follow_current
+                      message: >-
+                        For a fast-forward, target_node_id must be a descendant
+                        of the candidate's current node. Use POST
+                        /candidates/:id/rewind to move the candidate backward.
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/public/v1/pipelines:
+    get:
+      tags:
+        - Pipelines
+      summary: List pipelines
+      description: |
+        Returns a paginated list of pipelines scoped to the caller's company.
+        Each pipeline includes the inline `application_form` (the keys
+        integrators send in `application_metadata` on `POST /candidates`) and
+        a lightweight `nodes` list.
+      operationId: listPipelines
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+        - in: query
+          name: sort
+          description: |
+            Field + direction. Whitelisted: `created_at`, `updated_at`,
+            `name`. Default `-created_at`.
+          schema:
+            type: string
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+              - name
+              - '-name'
+            default: '-created_at'
+        - in: query
+          name: status
+          description: Comma-separated list of statuses (`_in`).
+          schema:
+            type: string
+            example: active,draft
+        - in: query
+          name: active
+          schema:
+            type: boolean
+        - in: query
+          name: job_type
+          schema:
+            type: string
+        - in: query
+          name: workplace_type
+          schema:
+            type: string
+        - in: query
+          name: location
+          description: Case-insensitive substring match.
+          schema:
+            type: string
+        - in: query
+          name: q
+          description: ILIKE substring match across `name` and `job_title`.
+          schema:
+            type: string
+            maxLength: 256
+        - in: query
+          name: created_after
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: created_before
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: A page of pipelines.
+          headers:
+            X-RateLimit-Limit-Minute:
+              $ref: '#/components/headers/RateLimitMinute'
+            X-RateLimit-Remaining-Minute:
+              $ref: '#/components/headers/RateLimitRemainingMinute'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/public/v1/pipelines/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Pipeline UUID.
+    get:
+      tags:
+        - Pipelines
+      summary: Fetch a pipeline
+      description: |
+        Returns a single pipeline with its `application_form` and `nodes`.
+      operationId: getPipeline
+      responses:
+        '200':
+          description: The pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/CandidateNotFound'
-        '413':
-          description: File exceeds 20MB cap.
+          $ref: '#/components/responses/PipelineNotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags:
+        - Pipelines
+      summary: Update a pipeline
+      description: |
+        Mutable subset only: `name` and `status`. `active` is read-only and
+        derived from `status`; sending it returns 400.
+
+        ### Status transitions
+        Allowed via API:
+        - `active → inactive` (pause; ATS write-back when role is filled)
+        - `active → draft` (send back to editing in the UI)
+        - same-state PATCH (no-op)
+
+        Rejected:
+        - any → `active` → `422 pipeline_activation_via_ui_only` (UI must
+          validate node graph + form)
+        - `draft → anything` → `422 pipeline_in_draft` (drafts may be
+          incomplete)
+        - `inactive → anything` → `422 invalid_status_transition`
+          (reactivate via UI)
+
+        `name` is patchable from any status.
+      operationId: updatePipeline
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePipelineRequest'
+      responses:
+        '200':
+          description: The refreshed pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '400':
+          description: Validation failure (no fields, sent `active`, bad status enum).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: invalid_request
-                  message: File too large (20MB limit)
-                  request_id: req_8f3e42a1b56c4d7f90e12345
-        '415':
-          description: Unsupported content-type.
+              examples:
+                active_field_rejected:
+                  summary: Tried to PATCH `active`
+                  value:
+                    error:
+                      code: invalid_request
+                      message: >-
+                        active is read-only — set status instead (e.g. status:
+                        "inactive")
+                      details:
+                        field: active
+                        hint: >-
+                          Set status to "draft" or "inactive". Activation must
+                          be done in the UI.
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                bad_status:
+                  summary: Status outside whitelist
+                  value:
+                    error:
+                      code: invalid_status
+                      message: 'status must be one of: draft, inactive'
+                      details:
+                        field: status
+                        allowed:
+                          - draft
+                          - inactive
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/PipelineNotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          description: Disallowed status transition (see endpoint description).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: unsupported_media_type
-                  message: >-
-                    Resume content-type must be one of: application/pdf,
-                    application/msword,
-                    application/vnd.openxmlformats-officedocument.wordprocessingml.document,
-                    text/plain
-                  details:
-                    received: image/png
-                  request_id: req_8f3e42a1b56c4d7f90e12345
+              examples:
+                pipeline_in_draft:
+                  summary: PATCH on a pipeline currently in draft
+                  value:
+                    error:
+                      code: pipeline_in_draft
+                      message: >-
+                        Pipelines in draft must be configured and activated in
+                        the Hivemind UI before the API can manage them.
+                      details:
+                        from: draft
+                        to: inactive
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                pipeline_activation_via_ui_only:
+                  summary: Tried to set status to active
+                  value:
+                    error:
+                      code: pipeline_activation_via_ui_only
+                      message: >-
+                        Activation requires UI validation of node graph and
+                        form.
+                      details:
+                        from: inactive
+                        to: active
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                invalid_status_transition:
+                  summary: Reactivating an inactive pipeline via API
+                  value:
+                    error:
+                      code: invalid_status_transition
+                      message: >-
+                        Inactive pipelines must be reactivated through the
+                        Hivemind UI so configuration is validated.
+                      details:
+                        from: inactive
+                        to: draft
+                      request_id: req_8f3e42a1b56c4d7f90e12345
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -524,11 +921,15 @@ components:
         resume_url: >-
           https://gethivemind-prod.s3.us-west-2.amazonaws.com/files/abc-resume.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=900&...
         application_metadata:
-          phone: '+15551112222'
-          linkedin_url: https://linkedin.com/in/alice
-          cover_letter: I am excited about this role because…
-          salary_expectations: '120000'
-          work_authorization: us_citizen
+          - key: phonenumber
+            answer: '+15551112222'
+            question: Phone Number
+          - key: linkedin_url
+            answer: https://linkedin.com/in/alice
+            question: LinkedIn
+          - key: cover_letter
+            answer: I am excited about this role because…
+            question: Cover Letter
     WhoamiResponse:
       type: object
       required:
@@ -538,15 +939,51 @@ components:
           type: string
           format: uuid
     ApplicationMetadata:
-      type: object
+      type: array
       nullable: true
-      additionalProperties: true
       description: |
-        Free-form key/value map captured by the pipeline's application form.
-        Schema varies per pipeline. Common keys: `phone`, `phone_number`,
-        `linkedin_url`, `cover_letter`, `salary_expectations`,
-        `work_authorization`, `location`. Missing fields don't block creation
-        but may cause downstream pipeline steps to fail.
+        Array of `{ key, answer, question? }` triples capturing each
+        non-core field from the pipeline's application form. The `key`
+        values are configured per pipeline — pipeline templates (email,
+        SMS, assessment) interpolate `{key}` references by exact match.
+        Sending a mismatched key (e.g. `phone` when the pipeline form
+        uses `phonenumber`) silently fails to populate that template
+        variable. Use `GET /pipelines/{id}` (Phase 3) to discover the
+        keys a given pipeline expects.
+
+        Missing fields don't block creation but may cause downstream
+        pipeline steps to fail when they try to read the missing key.
+      items:
+        $ref: '#/components/schemas/ApplicationMetadataEntry'
+    ApplicationMetadataEntry:
+      type: object
+      required:
+        - key
+        - answer
+      properties:
+        key:
+          type: string
+          maxLength: 256
+          description: |
+            Form-field key configured on the pipeline. Match exactly —
+            no name-mangling on our end.
+          example: phonenumber
+        answer:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: 'null'
+          description: The candidate's response to the field.
+          example: '+15551112222'
+        question:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: |
+            Human-readable field label. Optional; we don't auto-derive
+            it from `key`. If omitted, stored as `null`.
+          example: Phone Number
     CreateCandidateRequest:
       type: object
       required:
@@ -569,8 +1006,10 @@ components:
           maxLength: 2048
           description: |
             Optional. URL the server can fetch — we download and re-upload to
-            our own bucket. For local files use the
-            `POST /candidates/{id}/resume` multipart endpoint instead.
+            our own bucket. Mutually exclusive with `resume`; provide one or
+            the other.
+        resume:
+          $ref: '#/components/schemas/Resume'
         referral_tag:
           type: string
           maxLength: 256
@@ -580,23 +1019,48 @@ components:
         pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
         email: alice@example.com
         name: Alice Johnson
-        resume_url: https://files.example.com/resumes/alice.pdf
+        resume:
+          name: alice-johnson.pdf
+          data: JVBERi0xLjQKJSVzbW9rZS10ZXN0CiUlRU9GCg==
         referral_tag: linkedin-q2-2026
         application_metadata:
-          phone: '+15551112222'
-          linkedin_url: https://linkedin.com/in/alice
-          cover_letter: I am excited about this role because…
+          - key: phonenumber
+            answer: '+15551112222'
+          - key: linkedin_url
+            answer: https://linkedin.com/in/alice
+          - key: cover_letter
+            answer: I am excited about this role because…
+    Resume:
+      type: object
+      required:
+        - name
+        - data
+      description: |
+        Inline resume payload. The file is base64-encoded in `data`. Mutually
+        exclusive with `resume_url` on a `POST /candidates` body — provide
+        one or the other.
+
+        - `name`: filename including extension. The extension determines the
+          stored content type. Allowed: `.pdf`, `.doc`, `.docx`.
+        - `data`: base64-encoded file bytes. Maximum size after decode: 7MB.
+      properties:
+        name:
+          type: string
+          maxLength: 256
+          example: alice-johnson.pdf
+        data:
+          type: string
+          format: byte
+          description: Base64-encoded file bytes (≤ 7MB after decode).
+          example: JVBERi0xLjQKJSVzbW9rZS10ZXN0CiUlRU9GCg==
     UpdateCandidateRequest:
       type: object
-      description: At least one mutable field is required.
+      description: |
+        At least one mutable field is required. `status` is **read-only** —
+        it is driven by the pipeline engine. To move a candidate to a
+        specific node, use `POST /candidates/:id/rewind` or
+        `POST /candidates/:id/fast-forward`.
       properties:
-        status:
-          type: string
-          enum:
-            - in_progress
-            - pending_credits
-            - pending_valid_openai_key
-            - complete
         is_hired:
           type: boolean
         referral_tag:
@@ -605,6 +1069,105 @@ components:
       example:
         is_hired: true
         referral_tag: hired-q2-2026
+    MoveCandidateRequest:
+      type: object
+      required:
+        - target_node_id
+      properties:
+        target_node_id:
+          type: string
+          format: uuid
+          description: |
+            UUID of the target node. Must match an entry in
+            `pipeline.nodes[].id` for the candidate's pipeline.
+        dry_run:
+          type: boolean
+          default: false
+          description: |
+            If `true`, return the would-be result without applying any
+            change — no DB writes, no credit deduction, no email sent.
+            `applied` in the response will be `false`.
+        notify_candidate:
+          type: boolean
+          default: true
+          description: |
+            If `true` (default), the candidate receives a "your application
+            has progressed" email after the move. Set to `false` to perform
+            silent moves (e.g., bulk operations or backfills).
+      example:
+        target_node_id: 5c2e9d77-8a3b-4f55-bb12-c0e1d3a4b507
+        dry_run: false
+        notify_candidate: true
+    MoveCandidateResponse:
+      type: object
+      required:
+        - applied
+        - candidate
+        - moved_to
+        - deleted_responses
+      properties:
+        applied:
+          type: boolean
+          description: |
+            `false` for `dry_run: true` requests; `true` after a successful
+            apply.
+        candidate:
+          $ref: '#/components/schemas/Candidate'
+        moved_from:
+          oneOf:
+            - $ref: '#/components/schemas/MoveNodeSummary'
+            - type: 'null'
+          description: |
+            The candidate's previous node before the move. `null` if the
+            candidate had no `current_node_id` (rare).
+        moved_to:
+          $ref: '#/components/schemas/MoveNodeSummary'
+        deleted_responses:
+          type: array
+          description: |
+            Responses that were (or would be, on dry_run) deleted by a
+            rewind. Always `[]` for fast-forward.
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              node_id:
+                type: string
+                format: uuid
+              type:
+                type: string
+                nullable: true
+              label:
+                type: string
+                nullable: true
+              created_at:
+                type: string
+                format: date-time
+        credits_deducted_for:
+          type: string
+          nullable: true
+          description: |
+            The node type whose cost was deducted (e.g. `assessment`,
+            `manual_review`). `null` on `dry_run` (no deduction occurs).
+    MoveNodeSummary:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Node UUID. Same as `pipeline.nodes[].id`.
+        type:
+          type: string
+          description: Node type (e.g. `assessment`, `manual_review`, `email`).
+        label:
+          type: string
+          nullable: true
+          description: Human-readable name from the node's metadata.
     CandidateListResponse:
       type: object
       required:
@@ -649,13 +1212,271 @@ components:
             resume_url: >-
               https://gethivemind-prod.s3.us-west-2.amazonaws.com/files/abc-resume.pdf?X-Amz-Expires=900&...
             application_metadata:
-              phone: '+15551112222'
-              linkedin_url: https://linkedin.com/in/alice
+              - key: phonenumber
+                answer: '+15551112222'
+                question: Phone Number
+              - key: linkedin_url
+                answer: https://linkedin.com/in/alice
+                question: LinkedIn
         page: 1
         per_page: 50
         total: 347
         total_pages: 7
         has_more: true
+    Pipeline:
+      type: object
+      required:
+        - id
+        - status
+        - active
+        - created_at
+        - application_form
+        - nodes
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+          description: Internal pipeline name.
+        job_title:
+          type: string
+          nullable: true
+        job_description:
+          type: string
+          nullable: true
+        job_type:
+          type: string
+          nullable: true
+          description: e.g. "full-time", "part-time", "contract".
+        location:
+          type: string
+          nullable: true
+        workplace_type:
+          type: string
+          nullable: true
+          description: e.g. "remote", "hybrid", "on-site".
+        status:
+          type: string
+          description: |
+            Lifecycle state. Known values: `active`, `draft`, `inactive`.
+            Treat as opaque string for forward compat.
+        active:
+          type: boolean
+          readOnly: true
+          description: |
+            Computed from `status` (`status === "active"`). Not writable —
+            see `PATCH /pipelines/:id` for transition rules.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        application_form:
+          type: array
+          description: |
+            The pipeline's application-form schema. Each entry maps to a key
+            an integrator should send in `application_metadata` when posting
+            a candidate (except entries flagged `is_core`, which map to
+            top-level Candidate fields like `name`, `email`, `resume_url`).
+            Empty array if the pipeline has no Form node configured.
+          items:
+            $ref: '#/components/schemas/PipelineFormField'
+        nodes:
+          type: array
+          description: |
+            Lightweight summary of the pipeline's nodes — enough to map
+            `Candidate.current_node_id` to a stage name. Internal automation
+            config is stripped.
+          items:
+            $ref: '#/components/schemas/PipelineNode'
+      example:
+        id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
+        name: Senior Engineer 2026 Q2
+        job_title: Senior Software Engineer
+        job_description: Lead a small backend team building our public API…
+        job_type: full-time
+        location: Remote (US)
+        workplace_type: remote
+        status: active
+        active: true
+        created_at: '2026-04-22T09:30:00.000Z'
+        updated_at: '2026-04-23T11:00:00.000Z'
+        application_form:
+          - key: name
+            type: text
+            label: Full Name
+            required: true
+            options: null
+            is_core: true
+          - key: email
+            type: text
+            label: Email
+            required: true
+            options: null
+            is_core: true
+          - key: resume
+            type: file
+            label: Resume
+            required: true
+            options: null
+            is_core: true
+          - key: phonenumber
+            type: text
+            label: Phone Number
+            required: true
+            options: null
+            is_core: false
+          - key: linkedin
+            type: linkedin
+            label: LinkedIn
+            required: false
+            options: null
+            is_core: false
+        nodes:
+          - id: 5c2e9d77-8a3b-4f55-bb12-c0e1d3a4b507
+            node_flow_id: '1'
+            type: form
+            label: Application Form
+          - id: 7e1d8a55-6c4b-43e2-9f88-3a0b2c5d4e91
+            node_flow_id: '2'
+            type: email
+            label: Welcome Email
+          - id: 8f2c9b66-7d5b-44e3-aa99-4b1c3d6e5fa2
+            node_flow_id: '3'
+            type: assessment
+            label: Skills Assessment
+          - id: 9a3d0c77-8e6c-45f4-bbaa-5c2d4e7f60b3
+            node_flow_id: '4'
+            type: end
+            label: 'End: Hire'
+    PipelineFormField:
+      type: object
+      required:
+        - key
+        - type
+        - label
+        - required
+        - is_core
+      properties:
+        key:
+          type: string
+          description: |
+            Form-field key. Use this in `application_metadata[].key` on
+            `POST /candidates` (unless `is_core` is true).
+          example: phonenumber
+        type:
+          type: string
+          description: |
+            Field input type. One of `text`, `number`, `select`, `multi-select`,
+            `file`, `linkedin`, `location`, `url`.
+          example: text
+        label:
+          type: string
+          example: Phone Number
+        required:
+          type: boolean
+        options:
+          type: array
+          nullable: true
+          description: |
+            Choice options for `select`, `multi-select`, and `location`
+            fields. `null` for everything else.
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+        is_core:
+          type: boolean
+          description: |
+            `true` for fields whose `key` maps to a top-level Candidate
+            column (`name`, `email`, `resume`). Integrators **must not**
+            include these in `application_metadata` on `POST /candidates`
+            — pass them as top-level body fields (`name`, `email`,
+            `resume`/`resume_url`).
+    PipelineNode:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Node UUID. Matches `Candidate.current_node_id`.
+        node_flow_id:
+          type: string
+          nullable: true
+          description: The node's position id in the pipeline graph.
+        type:
+          type: string
+          description: |
+            One of the 26 node types — `start`, `form`, `email`, `sms`,
+            `voice_call`, `assessment`, `coding_assessment`,
+            `personality_test`, `iq_test`, `manual_review`,
+            `manual_interview`, `manual_phone_call`, `interview`,
+            `resumatic`, `http`, `webhook`, `zapier`, `time`,
+            `randomization`, `choice`, `group`, `split`, `drag_in`, `end`,
+            etc.
+        label:
+          type: string
+          nullable: true
+          description: Human-readable name from the node's metadata.
+    PipelineListResponse:
+      type: object
+      required:
+        - data
+        - page
+        - per_page
+        - total
+        - total_pages
+        - has_more
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pipeline'
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 50
+        total:
+          type: integer
+          example: 12
+        total_pages:
+          type: integer
+          example: 1
+        has_more:
+          type: boolean
+    UpdatePipelineRequest:
+      type: object
+      description: |
+        At least one mutable field is required. `active` is rejected
+        deliberately — set `status` instead. Status transitions are
+        enforced; see `PATCH /pipelines/:id` for the full matrix.
+      properties:
+        name:
+          type: string
+          maxLength: 256
+        status:
+          type: string
+          enum:
+            - draft
+            - inactive
+          description: |
+            Whitelisted to `draft` and `inactive` only. `active` is
+            intentionally absent — pipelines must be activated in the UI
+            so the node graph and form configuration are validated.
+      example:
+        status: inactive
     ErrorResponse:
       type: object
       required:
@@ -677,8 +1498,12 @@ components:
             `invalid_filter`, `invalid_status`, `invalid_idempotency_key`,
             `idempotency_conflict`, `candidate_not_found`,
             `pipeline_not_found`, `pipeline_inactive`,
-            `unsupported_media_type`, `rate_limited`, `not_found`,
-            `internal_error`.
+            `pipeline_in_draft`, `pipeline_activation_via_ui_only`,
+            `invalid_status_transition`, `target_node_not_found`,
+            `target_must_precede_current`, `target_must_follow_current`,
+            `cannot_move_to_current_node`, `candidate_has_no_current_node`,
+            `insufficient_credits`, `unsupported_media_type`,
+            `rate_limited`, `not_found`, `internal_error`.
         message:
           type: string
           description: Human-readable. May be reworded over time.
@@ -716,21 +1541,18 @@ components:
                     unknown:
                       - foo
                   request_id: req_8f3e42a1b56c4d7f90e12345
-            invalid_status:
-              summary: Bad PATCH status value
+            status_is_read_only:
+              summary: Tried to PATCH `status` on a candidate (read-only)
               value:
                 error:
-                  code: invalid_status
+                  code: invalid_request
                   message: >-
-                    status must be one of: in_progress, pending_credits,
-                    pending_valid_openai_key, complete
+                    status is read-only — it is driven by the pipeline engine.
+                    Use POST /candidates/:id/rewind or /fast-forward to move a
+                    candidate to a specific node.
                   details:
                     field: status
-                    allowed:
-                      - in_progress
-                      - pending_credits
-                      - pending_valid_openai_key
-                      - complete
+                    hint: POST /api/public/v1/candidates/:id/rewind or /fast-forward
                   request_id: req_8f3e42a1b56c4d7f90e12345
     Unauthorized:
       description: Missing, malformed, or invalid API key.
@@ -765,6 +1587,19 @@ components:
             error:
               code: candidate_not_found
               message: Candidate not found
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    PipelineNotFound:
+      description: |
+        Pipeline not found OR belongs to a different company. We return 404
+        in both cases to avoid leaking row existence across tenants.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: pipeline_not_found
+              message: Pipeline not found
               request_id: req_8f3e42a1b56c4d7f90e12345
     IdempotencyConflict:
       description: |

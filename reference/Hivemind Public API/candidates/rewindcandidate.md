@@ -1,6 +1,6 @@
 ---
 api:
   file: v1.yaml
-  operationId: uploadCandidateResume
+  operationId: rewindCandidate
 hidden: false
 ---

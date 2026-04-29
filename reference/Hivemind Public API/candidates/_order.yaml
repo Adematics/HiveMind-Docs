@@ -2,4 +2,5 @@
 - createcandidate
 - getcandidate
 - updatecandidate
-- uploadcandidateresume
+- rewindcandidate
+- fastforwardcandidate
