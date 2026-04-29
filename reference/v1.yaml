@@ -625,8 +625,7 @@ paths:
       tags:
         - Pipelines
       summary: Fetch a pipeline
-      description: |
-        Returns a single pipeline with its `application_form` and `nodes`.
+      description: Returns a single pipeline with its application_form and nodes.
       operationId: getPipeline
       responses:
         '200':
