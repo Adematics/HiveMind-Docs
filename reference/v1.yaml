@@ -625,7 +625,8 @@ paths:
       tags:
         - Pipelines
       summary: Fetch a pipeline
-      description: Returns a single pipeline with its application_form and nodes.
+      description: |
+        Returns a single pipeline with its `application_form` and `nodes`.
       operationId: getPipeline
       responses:
         '200':
@@ -1337,19 +1338,15 @@ components:
             is_core: false
         nodes:
           - id: 5c2e9d77-8a3b-4f55-bb12-c0e1d3a4b507
-            node_flow_id: '1'
             type: form
             label: Application Form
           - id: 7e1d8a55-6c4b-43e2-9f88-3a0b2c5d4e91
-            node_flow_id: '2'
             type: email
             label: Welcome Email
           - id: 8f2c9b66-7d5b-44e3-aa99-4b1c3d6e5fa2
-            node_flow_id: '3'
             type: assessment
             label: Skills Assessment
           - id: 9a3d0c77-8e6c-45f4-bbaa-5c2d4e7f60b3
-            node_flow_id: '4'
             type: end
             label: 'End: Hire'
     PipelineFormField:
@@ -1408,11 +1405,10 @@ components:
         id:
           type: string
           format: uuid
-          description: Node UUID. Matches `Candidate.current_node_id`.
-        node_flow_id:
-          type: string
-          nullable: true
-          description: The node's position id in the pipeline graph.
+          description: |
+            Node UUID. Matches `Candidate.current_node_id` and is the value
+            you pass as `target_node_id` to
+            `POST /candidates/:id/{rewind,fast-forward}`.
         type:
           type: string
           description: |
