@@ -13,13 +13,15 @@ info:
       `ErrorResponse`). Switch on `error.code`, not `error.message`.
     - **Pagination**: `page` (1-indexed, default 1) + `per_page` (default 50,
       max 200). Responses include `total`, `total_pages`, `has_more`.
-    - **Idempotency**: write endpoints accept `Idempotency-Key: <uuid v4>`.
-      Same key + same body within 24h → cached response replayed (with
-      `Idempotent-Replay: true` header). Same key + different body → 409.
     - **Rate limits**: 120 req/min and 10 000 req/day per company. Standard
       `X-RateLimit-*` headers on every response. 429 includes `Retry-After`.
     - **Request IDs**: every response carries `X-Request-Id`. Include it in
       support tickets.
+    - **Webhooks**: configure an endpoint in Settings → Integrations →
+      Webhook to receive `candidate.*` events. Verify each delivery by
+      string-comparing `X-Hivemind-Signature` to your stored secret with
+      a constant-time compare; dedupe on `X-Hivemind-Event-Id`. See
+      the `webhooks` section below for payload shapes and retry behavior.
   contact:
     name: Hivemind Support
     url: https://gethivemind.ai
@@ -47,6 +49,29 @@ tags:
   - name: Meta
     description: |
       Utility endpoints — key validation, server health.
+  - name: Webhooks
+    description: |
+      Outbound HTTPS POSTs Hivemind sends to your configured endpoint when a
+      candidate progresses through a pipeline. Configure URL + subscribed
+      events in the admin UI; you receive a per-company shared secret on
+      creation and can reveal it again at any time.
+
+      **Verification.** Compare the `X-Hivemind-Signature` header to your
+      stored secret with a constant-time string compare. There is no HMAC
+      and no canonical-payload step — TLS protects the body in flight; the
+      shared secret authenticates the sender. Dedupe replays on
+      `X-Hivemind-Event-Id` (the same value is sent on every retry of the
+      same event).
+
+      **Retry ladder.** 5 attempts spaced at 0s / 30s / 2m / 5m / 15m
+      (~22 min total budget). Per-attempt timeout is 10 seconds. After 24
+      consecutive failed deliveries the webhook is auto-disabled and stops
+      receiving events until you re-enable it from the admin UI. HTTP 410
+      / 404 from your endpoint short-circuits to auto-disable on the first
+      occurrence.
+
+      **Receiver contract.** Return any 2xx within 10 seconds. If your
+      processing is slow, ack immediately and dispatch to a job queue.
 security:
   - bearerAuth: []
 paths:
@@ -183,8 +208,6 @@ paths:
         the company's balance is insufficient — same behavior as candidates
         submitted through the public application form.
       operationId: createCandidate
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -213,8 +236,6 @@ paths:
                   code: pipeline_not_found
                   message: Pipeline not found
                   request_id: req_8f3e42a1b56c4d7f90e12345
-        '409':
-          $ref: '#/components/responses/IdempotencyConflict'
         '422':
           description: Pipeline is not active.
           content:
@@ -263,8 +284,6 @@ paths:
         Updates a whitelisted subset of mutable fields. Most candidate state
         is driven by the pipeline engine and is not externally mutable.
       operationId: updateCandidate
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -284,8 +303,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/CandidateNotFound'
-        '409':
-          $ref: '#/components/responses/IdempotencyConflict'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -320,8 +337,6 @@ paths:
         Send `dry_run: true` to preview which responses would be deleted
         without applying any change.
       operationId: rewindCandidate
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -380,8 +395,6 @@ paths:
                         target_node_id does not match any node in the
                         candidate's pipeline
                       request_id: req_8f3e42a1b56c4d7f90e12345
-        '409':
-          $ref: '#/components/responses/IdempotencyConflict'
         '422':
           description: |
             Disallowed move (see endpoint description).
@@ -452,8 +465,6 @@ paths:
         change. (Useful even though no responses are deleted, since it
         also exercises the ordering check.)
       operationId: fastForwardCandidate
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -496,8 +507,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/IdempotencyConflict'
         '422':
           description: |
             Disallowed move — typically `target_must_follow_current` if the
@@ -669,8 +678,6 @@ paths:
 
         `name` is patchable from any status.
       operationId: updatePipeline
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -721,8 +728,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/PipelineNotFound'
-        '409':
-          $ref: '#/components/responses/IdempotencyConflict'
         '422':
           description: Disallowed status transition (see endpoint description).
           content:
@@ -770,6 +775,159 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
+webhooks:
+  candidateStageChanged:
+    post:
+      tags:
+        - Webhooks
+      summary: Candidate moved between user-visible nodes
+      description: |
+        Fires whenever a candidate transitions to a new user-visible node
+        in their pipeline (any node that isn't a routing-only Choice/Group
+        node). Routing decisions traversed during the hop are folded into
+        `data.branched_through` so receivers can apply their own definition
+        of "rejected" / "advanced" without us guessing.
+
+        The previous node's response data (resumatic score, assessment
+        results, manual-review verdict, etc.) is included in
+        `data.previous.response` — shape varies by `data.previous.node_type`.
+      operationId: webhookCandidateStageChanged
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateStageChangedEvent'
+            examples:
+              passingChoiceBranch:
+                summary: Resumatic → splitNode (Pass) → assessment
+                value:
+                  id: evt_a3f2c1b8-9d40-4e2c-8c1c-1234567890ab
+                  type: candidate.stage_changed
+                  created_at: '2026-04-26T17:14:09.421Z'
+                  data:
+                    candidate:
+                      id: 6c2a8f3e-1234-4abc-9def-0123456789ab
+                      email: jane@example.com
+                      name: Jane Doe
+                      status: in_progress
+                      pipeline_id: 8f3e42a1-b56c-4d7f-90e1-234567890abc
+                      current_node_id: 1aa2bb33-cc44-dd55-ee66-ff7788990011
+                      is_hired: false
+                      referral_tag: linkedin
+                      total_score: 87
+                      last_active: '2026-04-26T17:14:08Z'
+                      created_at: '2026-04-21T10:02:00Z'
+                      resume_url: https://...
+                      application_metadata:
+                        - key: phonenumber
+                          answer: '+15551112222'
+                          question: Phone Number
+                    previous:
+                      node_id: 9bb1aa00-cc44-dd55-ee66-ff7788990022
+                      node_type: resumatic
+                      node_label: Resume Score
+                      response:
+                        score: 87
+                        evaluation_details:
+                          total_score: 87
+                          summary: Strong match — 7 years backend, Python expert.
+                    current:
+                      node_id: 1aa2bb33-cc44-dd55-ee66-ff7788990011
+                      node_type: assessment
+                      node_label: Skills Test
+                    branched_through:
+                      - node_id: c0d1e2f3-4444-5555-6666-7777aaaabbbb
+                        node_type: splitNode
+                        node_label: Pass / Fail by score
+                        decision:
+                          chosen_flow: Pass
+      responses:
+        2XX:
+          description: Receiver acknowledged the event.
+  candidateEnd:
+    post:
+      tags:
+        - Webhooks
+      summary: Candidate reached an End node
+      description: |
+        Fires when a candidate arrives at a node of type `endNode` —
+        terminal in the pipeline. `data.final_score` carries the aggregate
+        score returned by the pipeline at termination (may be `null` if no
+        scored nodes contributed).
+
+        The `data.branched_through` array preserves the routing decisions
+        that led here, so a receiver can distinguish e.g. "ended via the
+        Reject branch of the senior-screen Choice" from "ended through
+        normal completion".
+      operationId: webhookCandidateEnd
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateEndEvent'
+            examples:
+              hiredTrack:
+                summary: Reached the success-track End node
+                value:
+                  id: evt_b8c3d2a1-7e80-4f3d-9d2c-2345678901bc
+                  type: candidate.end
+                  created_at: '2026-04-28T09:00:00.000Z'
+                  data:
+                    candidate:
+                      id: 6c2a8f3e-1234-4abc-9def-0123456789ab
+                      email: jane@example.com
+                      name: Jane Doe
+                      status: complete
+                      pipeline_id: 8f3e42a1-b56c-4d7f-90e1-234567890abc
+                      current_node_id: ee99dd88-cc77-bb66-aa55-4444aa55bb66
+                      is_hired: false
+                      referral_tag: linkedin
+                      total_score: 91
+                      last_active: '2026-04-28T08:59:55Z'
+                      created_at: '2026-04-21T10:02:00Z'
+                      resume_url: https://...
+                      application_metadata: []
+                    previous:
+                      node_id: 1aa2bb33-cc44-dd55-ee66-ff7788990011
+                      node_type: assessment
+                      node_label: Skills Test
+                      response:
+                        score: 91
+                        details:
+                          averageScore: 91
+                    current:
+                      node_id: ee99dd88-cc77-bb66-aa55-4444aa55bb66
+                      node_type: endNode
+                      node_label: Hired track
+                    branched_through: []
+                    final_score: 91
+      responses:
+        2XX:
+          description: Receiver acknowledged the event.
+  candidateManualIntervention:
+    post:
+      tags:
+        - Webhooks
+      summary: Candidate is waiting on a human action
+      description: |
+        Fires when a candidate arrives at a `manualReview`, `manualInterview`,
+        or `manualPhoneCall` node — i.e., a node that pauses for a human
+        decision. The corresponding `candidate.stage_changed` event fires
+        alongside this one with the same `previous` / `current` /
+        `branched_through` data; subscribe to whichever signal you actually
+        care about.
+      operationId: webhookCandidateManualIntervention
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateManualInterventionEvent'
+      responses:
+        2XX:
+          description: Receiver acknowledged the event.
 components:
   securitySchemes:
     bearerAuth:
@@ -823,16 +981,6 @@ components:
           - total_score
           - '-total_score'
         default: '-created_at'
-    IdempotencyKey:
-      in: header
-      name: Idempotency-Key
-      required: false
-      schema:
-        type: string
-        format: uuid
-      description: |
-        UUID v4. Same key + same body within 24h → cached response replayed
-        with `Idempotent-Replay: true`. Same key + different body → 409.
   headers:
     RequestId:
       description: Server-generated request id; echo when contacting support.
@@ -1472,6 +1620,209 @@ components:
             so the node graph and form configuration are validated.
       example:
         status: inactive
+    WebhookEventNodeBlock:
+      type: object
+      description: |
+        Identifying info for a node referenced by a webhook event.
+        Stripped of internal automation config — only the fields a
+        receiver needs to map to a human-readable stage.
+      required:
+        - node_id
+        - node_type
+      properties:
+        node_id:
+          type: string
+          format: uuid
+          description: PipelineNode UUID. Same identifier as `Candidate.current_node_id`.
+        node_type:
+          type: string
+          description: |
+            Node type discriminator. One of the 26 internal types — common
+            values include `form`, `resumatic`, `assessment`, `email`,
+            `sms`, `manualReview`, `manualInterview`, `manualPhoneCall`,
+            `splitNode`, `group`, `endNode`.
+        node_label:
+          type: string
+          nullable: true
+          description: Human-readable label from the pipeline editor. May be `null`.
+    WebhookEventPreviousBlock:
+      allOf:
+        - $ref: '#/components/schemas/WebhookEventNodeBlock'
+        - type: object
+          properties:
+            response:
+              type: object
+              nullable: true
+              additionalProperties: true
+              description: >
+                The previous node's stored response data, shaped per
+
+                `node_type` so the receiver can act without a follow-up
+
+                API call. May be `null` for node types that don't persist
+
+                a response (`email`, `sms`, `http`, `wait`, `randomizer`,
+
+                `group`, `splitNode`, `start`).
+
+
+                Per-type fields (illustrative, not exhaustive):
+
+
+                * `resumatic` — `{ score, evaluation_details }`
+
+                * `assessment` — `{ score, details }`
+
+                * `personality` — `{ final_assessment, traits }`
+
+                * `iqTest` — `{ overall_iq, breakdown }`
+
+                * `call` — `{ evaluation, transcript_url }`
+
+                * `manualReview` — `{ status, notes }`
+
+                * `manualInterview` / `manualPhoneCall` — `{ approval_status,
+                notes }`
+
+                * `webhook` — `{ response, result }`
+
+                * `form` — `{ response }`
+    WebhookEventBranchedThroughEntry:
+      type: object
+      description: |
+        A routing-only node (`splitNode` or `group`) the candidate passed
+        through on the way to `current`. Not user-visible itself; the
+        decision data is what the receiver typically routes on.
+      required:
+        - node_id
+        - node_type
+        - decision
+      properties:
+        node_id:
+          type: string
+          format: uuid
+        node_type:
+          type: string
+          enum:
+            - splitNode
+            - group
+        node_label:
+          type: string
+          nullable: true
+        decision:
+          type: object
+          description: >
+            Routing-decision payload. Shape varies by `node_type`:
+
+            `splitNode` → `{ chosen_flow }`; `group` → `{ chosen_branch_index
+            }`.
+          properties:
+            chosen_flow:
+              type: string
+              description: >-
+                Name of the matching flow on a Choice/Split node (e.g. `Pass`,
+                `Fail`, or a custom flow name).
+            chosen_branch_index:
+              type: integer
+              description: Zero-indexed branch chosen by the Randomizer.
+    WebhookEventEnvelope:
+      type: object
+      description: |
+        Common envelope shared by every Hivemind webhook event. The
+        per-event `data.*` extras (e.g. `final_score` on `candidate.end`)
+        are documented on the individual event schemas.
+      required:
+        - id
+        - type
+        - created_at
+        - data
+      properties:
+        id:
+          type: string
+          description: |
+            Stable event id (`evt_<uuid>`). Use as the idempotency key on
+            your end — Hivemind sends the same value across all retries.
+          example: evt_a3f2c1b8-9d40-4e2c-8c1c-1234567890ab
+        type:
+          type: string
+          enum:
+            - candidate.stage_changed
+            - candidate.end
+            - candidate.manual_intervention
+        created_at:
+          type: string
+          format: date-time
+          description: >-
+            ISO 8601, UTC. Set when the event is enqueued, not when it's
+            delivered.
+        data:
+          type: object
+          required:
+            - candidate
+            - current
+            - branched_through
+          properties:
+            candidate:
+              $ref: '#/components/schemas/Candidate'
+            previous:
+              oneOf:
+                - $ref: '#/components/schemas/WebhookEventPreviousBlock'
+                - type: 'null'
+              description: |
+                The user-visible node the candidate just left. `null` only
+                on the very first transition (e.g. arrival from the Start
+                node).
+            current:
+              $ref: '#/components/schemas/WebhookEventNodeBlock'
+            branched_through:
+              type: array
+              description: |
+                Ordered list of routing-only nodes traversed on the way
+                from `previous` to `current`. Empty `[]` for direct
+                transitions.
+              items:
+                $ref: '#/components/schemas/WebhookEventBranchedThroughEntry'
+    CandidateStageChangedEvent:
+      allOf:
+        - $ref: '#/components/schemas/WebhookEventEnvelope'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - candidate.stage_changed
+    CandidateEndEvent:
+      allOf:
+        - $ref: '#/components/schemas/WebhookEventEnvelope'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - candidate.end
+            data:
+              type: object
+              properties:
+                final_score:
+                  type: number
+                  nullable: true
+                  description: |
+                    Aggregate score at termination, computed by the
+                    pipeline's scoring rollup. `null` if no scored nodes
+                    contributed.
+    CandidateManualInterventionEvent:
+      allOf:
+        - $ref: '#/components/schemas/WebhookEventEnvelope'
+        - type: object
+          description: |
+            Same envelope shape as `candidate.stage_changed`. Fires
+            alongside the corresponding `candidate.stage_changed` event;
+            subscribe to whichever you need.
+          properties:
+            type:
+              type: string
+              enum:
+                - candidate.manual_intervention
     ErrorResponse:
       type: object
       required:
@@ -1490,8 +1841,7 @@ components:
           description: |
             Stable enum. Switch on this, not `message`. Documented values:
             `missing_api_key`, `invalid_api_key`, `invalid_request`,
-            `invalid_filter`, `invalid_status`, `invalid_idempotency_key`,
-            `idempotency_conflict`, `candidate_not_found`,
+            `invalid_filter`, `invalid_status`, `candidate_not_found`,
             `pipeline_not_found`, `pipeline_inactive`,
             `pipeline_in_draft`, `pipeline_activation_via_ui_only`,
             `invalid_status_transition`, `target_node_not_found`,
@@ -1595,23 +1945,6 @@ components:
             error:
               code: pipeline_not_found
               message: Pipeline not found
-              request_id: req_8f3e42a1b56c4d7f90e12345
-    IdempotencyConflict:
-      description: |
-        The provided `Idempotency-Key` was previously used with a different
-        request body.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: idempotency_conflict
-              message: >-
-                This Idempotency-Key was previously used with a different
-                request body
-              details:
-                idempotency_key: 550e8400-e29b-41d4-a716-446655440000
               request_id: req_8f3e42a1b56c4d7f90e12345
     RateLimited:
       description: Rate limit exceeded. Retry after `Retry-After` seconds.
