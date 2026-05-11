@@ -776,6 +776,69 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 webhooks:
+  candidateApplied:
+    post:
+      tags:
+        - Webhooks
+      summary: New candidate entered a pipeline
+      description: |
+        Fires the moment a `Candidate` row is created in the database —
+        whether they applied through the public application form, were
+        sourced via the public API, or pulled in from an ATS sync (Ashby
+        / Greenhouse). The payload carries the full Candidate DTO **and**
+        a summary of the pipeline they applied to, so receivers can act
+        without an extra `GET /pipelines/:id` round-trip.
+
+        Fires before any `candidate.stage_changed` events the pipeline's
+        automation graph emits — receivers can rely on `applied`
+        preceding any node-transition events for the same candidate.
+      operationId: webhookCandidateApplied
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateAppliedEvent'
+            examples:
+              webFormSubmission:
+                summary: Candidate filled out the public application form
+                value:
+                  id: 2c1f4abc-9d40-4e2c-8c1c-1234567890ab
+                  type: candidate.applied
+                  created_at: '2026-04-26T17:14:09.421Z'
+                  data:
+                    candidate:
+                      id: 6c2a8f3e-1234-4abc-9def-0123456789ab
+                      email: jane@example.com
+                      name: Jane Doe
+                      status: in_progress
+                      pipeline_id: 8f3e42a1-b56c-4d7f-90e1-234567890abc
+                      current_node_id: null
+                      is_hired: false
+                      referral_tag: linkedin
+                      total_score: null
+                      last_active: '2026-04-26T17:14:09Z'
+                      created_at: '2026-04-26T17:14:09Z'
+                      resume_url: https://...
+                      application_metadata:
+                        - key: phonenumber
+                          answer: '+15551112222'
+                          question: Phone Number
+                    pipeline:
+                      id: 8f3e42a1-b56c-4d7f-90e1-234567890abc
+                      name: Senior Backend Engineer — funnel
+                      job_title: Senior Backend Engineer
+                      job_description: >-
+                        We are hiring a senior backend engineer to lead our
+                        payments stack...
+                      job_type: full-time
+                      location: Remote, US
+                      workplace_type: remote
+                      status: active
+                      active: true
+      responses:
+        2XX:
+          description: Receiver acknowledged the event.
   candidateStageChanged:
     post:
       tags:
@@ -802,7 +865,7 @@ webhooks:
               passingChoiceBranch:
                 summary: Resumatic → splitNode (Pass) → assessment
                 value:
-                  id: evt_a3f2c1b8-9d40-4e2c-8c1c-1234567890ab
+                  id: a3f2c1b8-9d40-4e2c-8c1c-1234567890ab
                   type: candidate.stage_changed
                   created_at: '2026-04-26T17:14:09.421Z'
                   data:
@@ -871,7 +934,7 @@ webhooks:
               hiredTrack:
                 summary: Reached the success-track End node
                 value:
-                  id: evt_b8c3d2a1-7e80-4f3d-9d2c-2345678901bc
+                  id: b8c3d2a1-7e80-4f3d-9d2c-2345678901bc
                   type: candidate.end
                   created_at: '2026-04-28T09:00:00.000Z'
                   data:
@@ -1620,6 +1683,84 @@ components:
             so the node graph and form configuration are validated.
       example:
         status: inactive
+    PipelineSummary:
+      type: object
+      description: |
+        Lightweight pipeline shape used in webhook payloads. A trimmed
+        subset of the full `Pipeline` schema — drops the application
+        form schema and node graph (which receivers can fetch via
+        `GET /pipelines/:id` if needed).
+      required:
+        - id
+        - status
+        - active
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+        job_title:
+          type: string
+          nullable: true
+        job_description:
+          type: string
+          nullable: true
+        job_type:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        workplace_type:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+          enum:
+            - active
+            - draft
+            - inactive
+            - null
+        active:
+          type: boolean
+          description: Computed — equivalent to `status === 'active'`.
+    CandidateAppliedEvent:
+      type: object
+      description: |
+        Outbound webhook fired when a new Candidate row is created in any
+        pipeline. Universal hook — covers the public application form,
+        public API POST, ATS sync, and any other path that lands rows in
+        `Candidate` (including manual Hasura console inserts during
+        support work).
+      required:
+        - id
+        - type
+        - created_at
+        - data
+      properties:
+        id:
+          type: string
+          example: 2c1f4abc-9d40-4e2c-8c1c-1234567890ab
+        type:
+          type: string
+          enum:
+            - candidate.applied
+        created_at:
+          type: string
+          format: date-time
+        data:
+          type: object
+          required:
+            - candidate
+            - pipeline
+          properties:
+            candidate:
+              $ref: '#/components/schemas/Candidate'
+            pipeline:
+              $ref: '#/components/schemas/PipelineSummary'
     WebhookEventNodeBlock:
       type: object
       description: |
@@ -1739,13 +1880,15 @@ components:
       properties:
         id:
           type: string
+          format: uuid
           description: |
-            Stable event id (`evt_<uuid>`). Use as the idempotency key on
-            your end — Hivemind sends the same value across all retries.
-          example: evt_a3f2c1b8-9d40-4e2c-8c1c-1234567890ab
+            Stable event id. Use as the idempotency key on your end —
+            Hivemind sends the same value across all retries.
+          example: a3f2c1b8-9d40-4e2c-8c1c-1234567890ab
         type:
           type: string
           enum:
+            - candidate.applied
             - candidate.stage_changed
             - candidate.end
             - candidate.manual_intervention
