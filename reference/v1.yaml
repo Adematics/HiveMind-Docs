@@ -8,20 +8,38 @@ info:
     Settings → Integrations → API Key.
 
     ### Conventions
-    - **Auth**: `Authorization: Bearer hk_<companyId>_<secret>`
+    - **Auth**: `Authorization: Bearer hk_live_<secret>`
     - **Errors**: every non-2xx response uses the standard error envelope (see
       `ErrorResponse`). Switch on `error.code`, not `error.message`.
     - **Pagination**: `page` (1-indexed, default 1) + `per_page` (default 50,
       max 200). Responses include `total`, `total_pages`, `has_more`.
-    - **Rate limits**: 120 req/min and 10 000 req/day per company. Standard
-      `X-RateLimit-*` headers on every response. 429 includes `Retry-After`.
+    - **Rate limits**: 120 req/min and 10 000 req/day per company.
+      Additionally 60 req/min per source IP before authentication.
+      Standard `X-RateLimit-*` headers on every response. 429 includes
+      `Retry-After`. If the rate limiter's backing store is unavailable
+      the API fails CLOSED — you'll see `503 service_unavailable` with
+      `Retry-After: 30` rather than uncapped traffic.
     - **Request IDs**: every response carries `X-Request-Id`. Include it in
       support tickets.
+    - **Idempotency**: send an `Idempotency-Key` header on any POST or
+      PATCH to make it safe to retry. The first successful 2xx response
+      is cached for 24 hours; subsequent retries with the same key
+      replay that cached response and add `Idempotent-Replay: true`.
+      Reusing a key with a different body returns
+      `409 idempotency_conflict`. Format: 8–64 chars of `[A-Za-z0-9_-]`
+      — UUID v4 works.
+    - **CORS**: this API is Bearer-authenticated server-to-server.
+      We deliberately do **not** set CORS headers — browsers will refuse
+      to call it directly, which is intentional. Bearer keys must never
+      live in client-side code; proxy through your own backend instead.
     - **Webhooks**: configure an endpoint in Settings → Integrations →
-      Webhook to receive `candidate.*` events. Verify each delivery by
-      string-comparing `X-Hivemind-Signature` to your stored secret with
-      a constant-time compare; dedupe on `X-Hivemind-Event-Id`. See
-      the `webhooks` section below for payload shapes and retry behavior.
+      Webhook and tick the candidate events you want
+      (`candidate.applied`, `candidate.stage_changed`, `candidate.end`,
+      `candidate.manual_intervention` — subscribe explicitly, no wildcards).
+      Verify each delivery by string-comparing `X-Hivemind-Signature`
+      to your stored secret with a constant-time compare; dedupe on
+      `X-Hivemind-Event-Id`. See the `webhooks` section below for
+      payload shapes and retry behavior.
   contact:
     name: Hivemind Support
     url: https://gethivemind.ai
@@ -53,15 +71,31 @@ tags:
     description: |
       Outbound HTTPS POSTs Hivemind sends to your configured endpoint when a
       candidate progresses through a pipeline. Configure URL + subscribed
-      events in the admin UI; you receive a per-company shared secret on
-      creation and can reveal it again at any time.
+      events in the admin UI; you receive a per-company shared secret
+      exactly once on creation (and again on rotation). If you lose it,
+      rotate to issue a new one — there is no recovery endpoint.
 
-      **Verification.** Compare the `X-Hivemind-Signature` header to your
-      stored secret with a constant-time string compare. There is no HMAC
-      and no canonical-payload step — TLS protects the body in flight; the
-      shared secret authenticates the sender. Dedupe replays on
-      `X-Hivemind-Event-Id` (the same value is sent on every retry of the
-      same event).
+      **Verification.** The `X-Hivemind-Signature` header carries the
+      shared secret itself, NOT a cryptographic signature. Compare it
+      against your stored copy with a constant-time string compare
+      (e.g. `crypto.timingSafeEqual` in Node, `hmac.compare_digest` in
+      Python). There is no HMAC, no timestamp binding, and no
+      canonical-payload step.
+
+      **What this model gives you.** Authentication: only Hivemind
+      knows your secret, so anyone presenting the right header is us.
+      Transport confidentiality: TLS. Per-event dedupe: every retry of
+      the same event carries the same `X-Hivemind-Event-Id`.
+
+      **What this model does NOT give you.** No replay protection: a
+      receiver that ever logs the header (or an intermediary that
+      caches it) learns your secret permanently. No body binding: an
+      attacker who replays a delivery can swap the body and keep the
+      header valid. Mitigations on our side: short delivery TTL
+      (5 attempts over ~22 minutes), HTTPS-only delivery, rotation
+      invalidates the previous secret immediately with no grace
+      window. Rotate immediately if your receiver is compromised or if
+      you observe the secret in logs.
 
       **Retry ladder.** 5 attempts spaced at 0s / 30s / 2m / 5m / 15m
       (~22 min total budget). Per-attempt timeout is 10 seconds. After 24
@@ -208,6 +242,8 @@ paths:
         the company's balance is insufficient — same behavior as candidates
         submitted through the public application form.
       operationId: createCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -235,6 +271,23 @@ paths:
                 error:
                   code: pipeline_not_found
                   message: Pipeline not found
+                  request_id: req_8f3e42a1b56c4d7f90e12345
+        '409':
+          description: |
+            A candidate with the same email already exists in this pipeline.
+            The existing candidate's id is returned in `details.candidate_id`
+            so the integrator can decide whether to PATCH the existing row
+            or ignore the duplicate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: candidate_already_exists
+                  message: A candidate with this email already exists in this pipeline.
+                  details:
+                    candidate_id: 6c2a8f3e-1234-4abc-9def-0123456789ab
                   request_id: req_8f3e42a1b56c4d7f90e12345
         '422':
           description: Pipeline is not active.
@@ -284,6 +337,8 @@ paths:
         Updates a whitelisted subset of mutable fields. Most candidate state
         is driven by the pipeline engine and is not externally mutable.
       operationId: updateCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -337,6 +392,8 @@ paths:
         Send `dry_run: true` to preview which responses would be deleted
         without applying any change.
       operationId: rewindCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -395,6 +452,22 @@ paths:
                         target_node_id does not match any node in the
                         candidate's pipeline
                       request_id: req_8f3e42a1b56c4d7f90e12345
+        '409':
+          description: |
+            Another request moved this candidate between your read of the
+            candidate's `current_node_id` and your move call. Refetch the
+            candidate and retry the move.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: concurrent_move
+                  message: >-
+                    This candidate was moved by another request. Refetch and try
+                    again.
+                  request_id: req_8f3e42a1b56c4d7f90e12345
         '422':
           description: |
             Disallowed move (see endpoint description).
@@ -465,6 +538,8 @@ paths:
         change. (Useful even though no responses are deleted, since it
         also exercises the ordering check.)
       operationId: fastForwardCandidate
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -507,6 +582,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: |
+            Another request moved this candidate between your read of the
+            candidate's `current_node_id` and your move call. Refetch the
+            candidate and retry the move.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: concurrent_move
+                  message: >-
+                    This candidate was moved by another request. Refetch and try
+                    again.
+                  request_id: req_8f3e42a1b56c4d7f90e12345
         '422':
           description: |
             Disallowed move — typically `target_must_follow_current` if the
@@ -678,6 +769,8 @@ paths:
 
         `name` is patchable from any status.
       operationId: updatePipeline
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -996,13 +1089,32 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: hk_<companyId>_<secret>
+      bearerFormat: hk_live_<secret>
       description: |
         Per-company API key. Mint via the Hivemind UI under Settings →
-        Integrations → API Key. Format `hk_<32-hex companyId>_<base62 secret>`.
-        Pass as `Authorization: Bearer <key>`. Regenerating in the UI
-        invalidates the previous key immediately.
+        Integrations → API Key. Format `hk_live_<base62 secret>` — the
+        key carries no tenant identity, so possession of the key is the
+        only auth claim. Pass as `Authorization: Bearer <key>`.
+
+        The plaintext is shown exactly once on generation; Hivemind
+        stores only an HMAC fingerprint. If you lose the key, click
+        "Regenerate" — that immediately invalidates the previous one.
   parameters:
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{8,64}$
+      description: |
+        Optional. Send the same key on a retry to make the request
+        idempotent. The first successful 2xx response is cached for
+        24 hours; subsequent retries with the same key return the
+        cached response with `Idempotent-Replay: true`. Reusing a key
+        with a different request body returns 409
+        `idempotency_conflict`. Format: 8–64 chars of `[A-Za-z0-9_-]`
+        — a UUID v4 is a fine default.
     CandidateId:
       in: path
       name: id
@@ -1201,6 +1313,12 @@ components:
         - pipeline_id
         - email
         - name
+      description: |
+        A resume is required — supply exactly one of `resume_url` OR `resume`.
+        Hivemind pipelines typically run a Resumatic (AI resume scoring) node
+        early in the flow, which silently stalls without a parseable resume;
+        we enforce the constraint here so the failure surfaces at the request
+        boundary instead of mid-pipeline.
       properties:
         pipeline_id:
           type: string
@@ -1216,9 +1334,9 @@ components:
           format: uri
           maxLength: 2048
           description: |
-            Optional. URL the server can fetch — we download and re-upload to
-            our own bucket. Mutually exclusive with `resume`; provide one or
-            the other.
+            URL the server can fetch — we download and re-upload to our own
+            bucket. Mutually exclusive with `resume`; supply one or the other,
+            never both, never neither.
         resume:
           $ref: '#/components/schemas/Resume'
         referral_tag:
@@ -1226,6 +1344,11 @@ components:
           maxLength: 256
         application_metadata:
           $ref: '#/components/schemas/ApplicationMetadata'
+      oneOf:
+        - required:
+            - resume_url
+        - required:
+            - resume
       example:
         pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
         email: alice@example.com
@@ -1985,13 +2108,24 @@ components:
             Stable enum. Switch on this, not `message`. Documented values:
             `missing_api_key`, `invalid_api_key`, `invalid_request`,
             `invalid_filter`, `invalid_status`, `candidate_not_found`,
-            `pipeline_not_found`, `pipeline_inactive`,
-            `pipeline_in_draft`, `pipeline_activation_via_ui_only`,
-            `invalid_status_transition`, `target_node_not_found`,
-            `target_must_precede_current`, `target_must_follow_current`,
-            `cannot_move_to_current_node`, `candidate_has_no_current_node`,
-            `insufficient_credits`, `unsupported_media_type`,
-            `rate_limited`, `not_found`, `internal_error`.
+            `candidate_already_exists`, `conflict`, `pipeline_not_found`,
+            `pipeline_inactive`, `pipeline_in_draft`,
+            `pipeline_activation_via_ui_only`, `invalid_status_transition`,
+            `target_node_not_found`, `target_must_precede_current`,
+            `target_must_follow_current`, `cannot_move_to_current_node`,
+            `candidate_has_no_current_node`, `insufficient_credits`,
+            `concurrent_move`, `invalid_idempotency_key`,
+            `idempotency_conflict`, `idempotency_in_progress`,
+            `payload_too_large`, `unsupported_media_type`,
+            `rate_limited`, `service_unavailable`, `not_found`,
+            `internal_error`.
+
+            **`conflict`** is the generic 409 returned when the database
+            layer rejects a write due to a uniqueness or referential
+            constraint that doesn't have a more specific code. For known
+            conflict cases (duplicate candidate, duplicate webhook, etc.)
+            a resource-specific code is returned instead — switch on
+            those first if you want resource-aware handling.
         message:
           type: string
           description: Human-readable. May be reworded over time.
@@ -2118,4 +2252,22 @@ components:
             error:
               code: internal_error
               message: An unexpected error occurred
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    ServiceUnavailable:
+      description: |
+        The service or one of its hard dependencies (rate limiter,
+        Redis) is unavailable. Retry after the indicated cool-down.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before the next attempt.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: service_unavailable
+              message: Rate limit temporarily unavailable
               request_id: req_8f3e42a1b56c4d7f90e12345
