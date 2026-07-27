@@ -2,29 +2,13 @@
 title: Welcome to Hivemind
 hidden: false
 ---
-<Callout icon="📘" theme="info">
-  **Template:**  Delete this callout and edit this page with your content and links.
-</Callout>
 
 <Cards>
-  {/* Edit the props below to customize these components */}
-  <Card title="Quick Start" href="#" icon="fa-duotone fa-rocket-launch">Learn how to get started with our product</Card>
+  <Card title="Quick Start" href="/docs/quick-start" icon="fa-duotone fa-rocket-launch">From signup to your first candidate in minutes</Card>
 
-  <Card title="API Reference" href="#" icon="fa-duotone fa-code-simple">Explore endpoints and build your integration</Card>
+  <Card title="Pipelines" href="/docs/pipelines-overview" icon="fa-duotone fa-diagram-project">Build automated hiring pipelines with AI</Card>
 
-  <Card title="Build with AI" href="#" icon="fa-duotone fa-sparkles">Use LLM features to automate your workflow</Card>
-</Cards>
-
-<br />
-
-## Recent Releases
-
-<Cards>
-  <Card isNew kind="tile" title="v2.0 Migration" href="#" icon="fa-duotone fa-magnifying-glass">Everything you need to upgrade</Card>
-
-  <Card kind="tile" title="Webhooks" href="#" icon="fa-duotone fa-bullhorn">Real-time events are now available</Card>
-
-  <Card kind="tile" title="Android SDK" href="#" icon="fa-duotone fa-robot">Our native Android library is out of beta</Card>
+  <Card title="API Reference" href="/reference" icon="fa-duotone fa-code-simple">Explore endpoints and build your integration</Card>
 </Cards>
 
 <br />
@@ -32,17 +16,35 @@ hidden: false
 ## The Basics
 
 <Cards>
-  <Card kind="tile" title="Customize" href="#" icon="fa-duotone fa-brush">Style the widget to match your brand</Card>
+  <Card title="Account & Workspace Setup" href="/docs/account-workspace-setup" icon="fa-duotone fa-gear">Set up your company, email, and team</Card>
 
-  <Card kind="tile" title="Integrations" href="#" icon="fa-duotone fa-arrow-down-left-and-arrow-up-right-to-center">Connect with third-party services</Card>
+  <Card title="Candidates" href="/docs/candidate-profiles" icon="fa-duotone fa-users">Profiles, sourcing, and the candidate experience</Card>
 
-  <Card kind="tile" title="CLI" href="#" icon="fa-duotone fa-terminal">Manage resources from your terminal</Card>
+  <Card title="Assessments" href="/docs/assessments-overview" icon="fa-duotone fa-clipboard-check">Video, MCQ, coding, IQ, and personality tests</Card>
 
-  <Card kind="tile" title="Security" href="" icon="fa-duotone fa-shield-dog">Learn how we secure your data</Card>
+  <Card title="Interviews & Calls" href="/docs/ai-voice-interviews" icon="fa-duotone fa-phone">AI voice interviews, calls, and scheduling</Card>
 
-  <Card kind="tile" title="Common Issues" href="" icon="fa-duotone fa-file-circle-info">Troubleshoot common issues</Card>
+  <Card title="Outreach & Inbox" href="/docs/outreach-campaigns" icon="fa-duotone fa-paper-plane">Campaigns, people search, and email</Card>
 
-  <Card kind="tile" title="Sync" href="#" icon="fa-duotone fa-code-compare">Connect to a storage provider</Card>
+  <Card title="Company Page" href="/docs/your-company-page" icon="fa-duotone fa-building">Build your public careers page</Card>
+</Cards>
+
+<br />
+
+## Going Further
+
+<Cards>
+  <Card title="Team & Roles" href="/docs/team-members-roles" icon="fa-duotone fa-user-group">Invite teammates and manage permissions</Card>
+
+  <Card title="Credits & Billing" href="/docs/credits-billing" icon="fa-duotone fa-coins">How credits and plans work</Card>
+
+  <Card title="Integrations" href="/docs/integrations-overview" icon="fa-duotone fa-arrow-down-left-and-arrow-up-right-to-center">Connect Google, Zoom, ATS tools, and more</Card>
+
+  <Card title="Webhooks" href="/docs/webhooks" icon="fa-duotone fa-bullhorn">Subscribe to real-time candidate events</Card>
+
+  <Card title="Common Issues" href="/docs/faq-common-issues" icon="fa-duotone fa-file-circle-info">Troubleshoot common issues</Card>
+
+  <Card title="Contact & Support" href="/docs/contact-support" icon="fa-duotone fa-headset">Reach the team or book a call</Card>
 </Cards>
 
 <br />
