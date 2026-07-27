@@ -1,8 +1,8 @@
 ---
 title: Account & Workspace Setup
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Company info, connecting your email, inviting teammates; where everything lives in Settings.
+**It will cover:** Company info, connecting your email, inviting teammates; where everything lives in Settings.

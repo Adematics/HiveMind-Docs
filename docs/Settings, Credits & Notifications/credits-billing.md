@@ -1,8 +1,8 @@
 ---
 title: Credits & Billing
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** How credits are consumed (AI evaluations, pipeline processing), plans, transaction history, Stripe checkout.
+**It will cover:** How credits are consumed (AI evaluations, pipeline processing), plans, transaction history, Stripe checkout.

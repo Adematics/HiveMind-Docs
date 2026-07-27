@@ -1,8 +1,8 @@
 ---
 title: Sourcing with People Search
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Finding prospects with PDL search and adding them to campaigns.
+**It will cover:** Finding prospects with PDL search and adding them to campaigns.

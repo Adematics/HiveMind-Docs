@@ -1,8 +1,8 @@
 ---
 title: Team Members & Roles
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Inviting teammates, custom roles and permissions.
+**It will cover:** Inviting teammates, custom roles and permissions.

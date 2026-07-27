@@ -1,8 +1,8 @@
 ---
 title: Creating a Pipeline
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** The AI chat builder and the drag-and-drop editor.
+**It will cover:** The AI chat builder and the drag-and-drop editor.

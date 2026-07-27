@@ -1,8 +1,8 @@
 ---
 title: Managing Candidates in a Pipeline
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Pipeline candidate view, moving candidates, fast-forward/rewind, manual intervention.
+**It will cover:** Pipeline candidate view, moving candidates, fast-forward/rewind, manual intervention.

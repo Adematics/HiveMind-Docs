@@ -1,8 +1,8 @@
 ---
 title: Offers
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Sending and e-signing offers.
+**It will cover:** Sending and e-signing offers.

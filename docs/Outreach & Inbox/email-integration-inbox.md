@@ -1,8 +1,8 @@
 ---
 title: Email Integration & Inbox
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Connecting Gmail/IMAP, inbound email tracking, managing conversations in the unified inbox.
+**It will cover:** Connecting Gmail/IMAP, inbound email tracking, managing conversations in the unified inbox.

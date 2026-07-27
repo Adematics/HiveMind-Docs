@@ -1,8 +1,8 @@
 ---
 title: Quick Start
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Signup to first candidate: create an account, set up your workspace, build a pipeline with the AI chat builder, add a candidate.
+**It will cover:** Signup to first candidate: create an account, set up your workspace, build a pipeline with the AI chat builder, add a candidate.

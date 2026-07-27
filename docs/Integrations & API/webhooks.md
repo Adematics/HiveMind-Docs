@@ -1,8 +1,8 @@
 ---
 title: Webhooks
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Subscribing to candidate events (applied, stage changed, ended, manual intervention), payloads and retries.
+**It will cover:** Subscribing to candidate events (applied, stage changed, ended, manual intervention), payloads and retries.

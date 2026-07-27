@@ -1,8 +1,8 @@
 ---
 title: Notifications & Mobile App
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** In-app notifications, email digests, and mobile push notifications.
+**It will cover:** In-app notifications, email digests, and mobile push notifications.
