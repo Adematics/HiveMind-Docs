@@ -1,8 +1,8 @@
 ---
 title: Outreach Campaigns
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Creating multi-channel (email/SMS) campaigns, sequences, recipient statuses.
+**It will cover:** Creating multi-channel (email/SMS) campaigns, sequences, recipient statuses.

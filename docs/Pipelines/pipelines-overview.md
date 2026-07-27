@@ -1,8 +1,8 @@
 ---
 title: Pipelines Overview
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** What a pipeline is, how the visual builder works, how candidates move through stages automatically.
+**It will cover:** What a pipeline is, how the visual builder works, how candidates move through stages automatically.

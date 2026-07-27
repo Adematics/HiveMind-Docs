@@ -1,8 +1,8 @@
 ---
 title: Settings Overview
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** Tour of the settings tabs: account, workspace, email services, appearance.
+**It will cover:** Tour of the settings tabs: account, workspace, email services, appearance.

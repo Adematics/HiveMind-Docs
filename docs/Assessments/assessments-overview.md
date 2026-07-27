@@ -1,8 +1,8 @@
 ---
 title: Assessments Overview
-hidden: true
+hidden: false
 ---
 
-> 🚧 **Stub** — this page has its own ticket and will be written independently.
+> 🚧 **Coming soon** — this guide is being written and will be published shortly.
 
-**This page will cover:** The assessment library and how assessments plug into pipelines.
+**It will cover:** The assessment library and how assessments plug into pipelines.
