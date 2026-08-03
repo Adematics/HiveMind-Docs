@@ -42,10 +42,10 @@ info:
       payload shapes and retry behavior.
   contact:
     name: Hivemind Support
-    url: https://gethivemind.ai
+    url: https://hivemind.hr
     email: support@gethivemind.ai
 servers:
-  - url: https://gethivemind.ai
+  - url: https://hivemind.hr
     description: Production
   - url: http://localhost:4000
     description: Local development
