@@ -12,7 +12,7 @@ Open **Assessments** in the sidebar to reach **My Assessments**, the home of eve
 - **Assessments**: a table of your assessments with **Title**, **Difficulty** (Easy / Medium / Hard), **Time Limit**, **Questions**, candidate counts (**Direct**, **Pipeline**, **Total**), **Avg Score**, and **Created** date. Search, filter, and sort to find anything fast.
 - **Analytics**: workspace-wide stats such as **Total Assessments**, **Total Questions**, **Total Candidates**, and **Average Score**, plus usage and question insights.
 
-{/* 📸 Screenshot: The My Assessments page showing the assessments table, the Assessments/Analytics toggle, and the New Assessment button */}
+![The My Assessments page showing the assessments table, the Assessments/Analytics toggle, and the New Assessment button](https://rocketdevs-assets.s3.amazonaws.com/lark-files/%20image.png)
 
 From the header you can open the **Question Bank** or click **New Assessment** to build one. See [Creating & Editing Assessments](/docs/creating-editing-assessments). Each row's actions include **View Details**, **View Candidates**, **Share Link**, **Edit Assessment**, **Duplicate**, and **Delete**.
 
