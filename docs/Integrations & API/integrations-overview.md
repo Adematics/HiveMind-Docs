@@ -26,8 +26,8 @@ Hivemind connects to the tools you already hire with: your email, calendar, vide
 
 Integrations come in two scopes:
 
-- **Personal**: each teammate links their own account: Google email/calendar, Google Meet, Zoom, LinkedIn, and WhatsApp. Your connections appear under **My connected accounts** with badges showing what each account can do (for example **Calendar**, **Meet**, **Gmail**).
-- **Company-wide**: one connection shared by the whole workspace: Twilio, OpenAI, Ashby, and Greenhouse. These cards are only visible to roles that can manage company integrations (Owner, Admin, and Developer). See [Team Members & Roles](/docs/team-members-roles).
+- **Personal**: each teammate links their own account (Google email/calendar, Google Meet, Zoom, LinkedIn, and WhatsApp). Your connections appear under **My connected accounts** with badges showing what each account can do (for example **Calendar**, **Meet**, **Gmail**).
+- **Company-wide**: one connection shared by the whole workspace (Twilio, OpenAI, Ashby, and Greenhouse). These cards are only visible to roles that can manage company integrations (Owner, Admin, and Developer). See [Team Members & Roles](/docs/team-members-roles).
 
 ## 3. Connect an integration
 

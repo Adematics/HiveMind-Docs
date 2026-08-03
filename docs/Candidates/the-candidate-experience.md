@@ -48,7 +48,7 @@ Depending on how you configured the stage, candidates either:
 
 ## Emails along the way
 
-With your mailbox connected (see [Email Integration & Inbox](/docs/email-integration-inbox)), candidates receive automated emails at each step: assessment invitations with up to three reminders ("Final Reminder: Please Complete Your Assessment"), interview invitations with date, a **Join Meeting** link and a calendar invite, reschedule notices, offer signing links, and (if you enable it) a courteous not-moving-forward note. Emails you author in an email step support placeholders like the candidate's first name and your company name.
+With your mailbox connected (see [Email Integration & Inbox](/docs/email-integration-inbox)), candidates receive automated emails at each step: assessment invitations with up to three reminders ("Final Reminder: Please Complete Your Assessment"), interview invitations with the date, a **Join Meeting** link, and a calendar invite, reschedule notices, offer signing links, and (if you enable it) a courteous not-moving-forward note. Emails you author in an email step support placeholders like the candidate's first name and your company name.
 
 ## What's next
 

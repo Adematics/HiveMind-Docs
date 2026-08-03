@@ -13,7 +13,7 @@ There are two ways to build a pipeline: let **Hive**, the AI chat builder, assem
 2. **Select the role.** Search for the position you're hiring for (e.g. Frontend Developer).
 3. **Pick the required skills.** Hive suggests skills for the role; select at least one and click **Continue**.
 4. **Choose a seniority level**: **Intern**, **Junior**, **Mid Level**, **Senior**, **Lead**, or **Principal**.
-5. **Set up the interview step.** Pick your **Interviewers** from your team and a **Meeting Platform**, **Google Meet** or **Zoom**, created on the host interviewer's connected account. Your timezone is picked up automatically.
+5. **Set up the interview step.** Pick your **Interviewers** from your team and a **Meeting Platform** (**Google Meet** or **Zoom**), created on the host interviewer's connected account. Your timezone is picked up automatically.
 6. **Add more details, or not.** Choose **Add More Details** to specify a **Location**, **Contract Type** (Full-time, Part-time, Contract, Freelance), **Work Type** (Remote, On-site, Hybrid), and any notes, or choose **Create Pipeline Now** to skip straight ahead.
 7. **Review the summary**: template, role, skills, seniority, work preferences, interview setup, and notes. Then click **Create Pipeline**.
 

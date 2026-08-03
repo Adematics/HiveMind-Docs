@@ -7,7 +7,7 @@ Something not working, or just want a human to walk you through Hivemind? Here's
 
 ## Chat with us in the app
 
-The quickest route: click **Chat with Us** at the bottom of the sidebar, next to **Settings**. It opens a live support chat right inside Hivemind: no ticket forms, no leaving the page. Because you're signed in, the team already knows which workspace you're writing from, so you can skip the preamble and get straight to the problem.
+The quickest route: click **Chat with Us** at the bottom of the sidebar, next to **Settings**. It opens a live support chat right inside Hivemind, with no ticket forms and no leaving the page. Because you're signed in, the team already knows which workspace you're writing from, so you can skip the preamble and get straight to the problem.
 
 {/* 📸 Screenshot: the sidebar footer with the Chat with Us item highlighted, and the support chat window open */}
 

@@ -11,7 +11,7 @@ From any pipeline, open the **Manage** menu and choose **Applicants**. You'll la
 
 {/* 📸 Screenshot: a pipeline's candidates table with Status chips and Current Node badges visible */}
 
-Each candidate's **Status** chip tells you where things stand: **Ongoing** (moving through the pipeline), **Completed** (reached the end), or **Pending Credits** (paused until your workspace has credits. See [Credits & Billing](/docs/credits-billing)). Use the search box and column filters to narrow the list, and click a candidate's name to open their details panel, or jump to their full record in [Candidate Profiles](/docs/candidate-profiles).
+Each candidate's **Status** chip tells you where things stand: **Ongoing** (moving through the pipeline), **Completed** (reached the end), or **Pending Credits** (paused until your workspace has credits; see [Credits & Billing](/docs/credits-billing)). Use the search box and column filters to narrow the list, and click a candidate's name to open their details panel, or jump to their full record in [Candidate Profiles](/docs/candidate-profiles).
 
 ## 2. How candidates get in
 

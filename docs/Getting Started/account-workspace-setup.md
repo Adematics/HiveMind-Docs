@@ -48,7 +48,7 @@ Once connected, use **Test Email Accounts** to confirm sending works. Full detai
 
 ## 4. Connect your calendar
 
-Interview scheduling pulls availability from your calendar. Go to the **Calendar** page in the sidebar and open its **Connections** tab, where you can connect **Google Calendar** plus a meeting provider, **Google Meet** or **Zoom**. The same Google account can cover both calendar sync and Meet. See [Calendar & Scheduling](/docs/calendar-scheduling).
+Interview scheduling pulls availability from your calendar. Go to the **Calendar** page in the sidebar and open its **Connections** tab, where you can connect **Google Calendar** plus a meeting provider (**Google Meet** or **Zoom**). The same Google account can cover both calendar sync and Meet. See [Calendar & Scheduling](/docs/calendar-scheduling).
 
 {/* 📸 Screenshot: Calendar → Connections tab showing the Google Calendar, Google Meet, and Zoom cards */}
 

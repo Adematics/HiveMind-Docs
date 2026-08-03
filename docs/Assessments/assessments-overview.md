@@ -10,7 +10,7 @@ Assessments let you test candidates' real skills (writing, reasoning, coding, ev
 Open **Assessments** in the sidebar to reach **My Assessments**, the home of every assessment in your workspace. A toggle at the top switches between two views:
 
 - **Assessments**: a table of your assessments with **Title**, **Difficulty** (Easy / Medium / Hard), **Time Limit**, **Questions**, candidate counts (**Direct**, **Pipeline**, **Total**), **Avg Score**, and **Created** date. Search, filter, and sort to find anything fast.
-- **Analytics**: workspace-wide stats: **Total Assessments**, **Total Questions**, **Total Candidates**, and **Average Score**, plus usage and question insights.
+- **Analytics**: workspace-wide stats such as **Total Assessments**, **Total Questions**, **Total Candidates**, and **Average Score**, plus usage and question insights.
 
 {/* 📸 Screenshot: The My Assessments page showing the assessments table, the Assessments/Analytics toggle, and the New Assessment button */}
 

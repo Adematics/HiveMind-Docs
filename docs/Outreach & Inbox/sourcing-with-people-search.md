@@ -53,7 +53,7 @@ Only prospects with an email address can be added; the button shows the reachabl
 Every profile a search returns is automatically saved to the **Contacts** tab, so you never lose a good find. From there you can select saved contacts and click **Create Campaign** to start outreach later, or pull them into an existing campaign with **From Contacts**.
 
 <Callout icon="⚠️" theme="warn">
-  If you clear every filter, Hivemind asks you to **keep at least one filter**, since very broad searches are blocked so you don't spend credits on unusable results.
+  If you clear every filter, Hivemind asks you to **keep at least one filter**: very broad searches are blocked so you don't spend credits on unusable results.
 </Callout>
 
 ## What's next

@@ -12,7 +12,7 @@ In the pipeline editor, add a **Voice Call** node and open its settings:
 - **Node Name**: how the stage appears in your pipeline.
 - **Preset**: start from **Screening (Joe)** or **Screening (Sally)** for a ready-made phone screen, or pick **Customizable** to write your own from scratch.
 - **First Message**: the opening line the AI speaks when the candidate picks up.
-- **Prompt**: the interview brief: what to ask, what to probe, how to evaluate. Use the **Name**, **Company**, **Position**, and **Job Description** variables to personalize every call automatically.
+- **Prompt**: the interview brief, covering what to ask, what to probe, and how to evaluate. Use the **Name**, **Company**, **Position**, and **Job Description** variables to personalize every call automatically.
 - **Voice**: choose **Cordial Joe** or **Laidback Sally**.
 
 {/* 📸 Screenshot: The Voice Call node settings with a preset, first message, and prompt filled in */}
@@ -42,7 +42,7 @@ Once the call ends, Hivemind processes it automatically. Open the candidate's pr
 
 {/* 📸 Screenshot: A candidate's AI voice call detail showing the recording player, Summary tab, and score */}
 
-The AI's evaluation can also drive your pipeline automatically: follow the Voice Call stage with a **Choice** node to route strong performers forward and screen out the rest. See the [Pipeline Nodes Reference](/docs/pipeline-nodes-reference).
+The AI's evaluation can also drive your pipeline automatically: follow the Voice Call stage with a **Flow** node to route strong performers forward and screen out the rest. See the [Pipeline Nodes Reference](/docs/pipeline-nodes-reference).
 
 ## 4. Prefer a human? Use Manual Phone Call
 

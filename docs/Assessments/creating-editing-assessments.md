@@ -7,9 +7,9 @@ Build an assessment in minutes with the guided helper, or hand-pick every questi
 
 ## 1. Create with the helper
 
-From **Assessments**, click **New Assessment**. The guided builder walks three steps: **Role/Skills Selection**, **Assessment Configuration**, and **Review & Confirm**:
+From **Assessments**, click **New Assessment**. The guided builder has three steps (**Role/Skills Selection**, **Assessment Configuration**, and **Review & Confirm**):
 
-1. **Choose a Role**: search for the role you're hiring (e.g. Frontend Developer), then **Select Relevant Skills** from the suggested skill pills.
+1. **Choose a Role**: search for the role you're hiring for (e.g. Frontend Developer), then **Select Relevant Skills** from the suggested skill pills.
 2. **Configure Your Assessment**: set the **Average Assessment Difficulty** (Easy / Medium / Hard) and pick your **Question Types**. Each type card shows how many matching questions are available. See [Assessment Types](/docs/assessment-types) for what each one measures.
 3. **Review & Confirm**: Hivemind shows **Composing Questions...** while it generates an optimized set of 10 questions weighted to your difficulty. Review the list, swap anything you like, then click **Confirm and Create**.
 

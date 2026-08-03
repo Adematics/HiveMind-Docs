@@ -21,7 +21,7 @@ The table shows columns like **Name**, **Email**, **Phone**, **Score**, **Status
 Need the data elsewhere? Click **Export** to download the current view (rows, columns, and filters included) as a CSV.
 
 <Callout icon="💡" theme="info">
-  Select one or more rows to act in bulk: **Send Email** messages everyone selected, and **Delete** removes them. Deleting is permanent: it erases all responses, notifications, and history.
+  Select one or more rows to act in bulk: **Send Email** sends a message to everyone selected, and **Delete** removes them. Deleting is permanent: it erases all responses, notifications, and history.
 </Callout>
 
 ## Quick view and full profile
