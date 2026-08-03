@@ -3,12 +3,12 @@ title: Settings Overview
 hidden: false
 ---
 
-Settings is the control room for your Hivemind workspace — your personal account, your company profile, your team, integrations, credits, and the look of the app all live here. Open **Settings** from the sidebar and you'll see a list of tabs on the left; click any tab to jump to that area.
+Settings is the control room for your Hivemind workspace: your personal account, your company profile, your team, integrations, credits, and the look of the app all live here. Open **Settings** from the sidebar and you'll see a list of tabs on the left; click any tab to jump to that area.
 
 {/* 📸 Screenshot: Settings page with the left sidebar showing all tabs (Account Settings, Workspace Settings, Team Members, Roles, Apps & Integrations, Credits, Email Services, Appearance) */}
 
 <Callout icon="💡" theme="info">
-  The tabs you see depend on your role. **Account Settings** is visible to everyone, but tabs like **Workspace Settings**, **Team Members**, **Roles**, **Credits**, and **Appearance** only appear if your role has permission to manage them. Owners see everything. If a tab is missing, ask a workspace Owner — see [Team Members & Roles](/docs/team-members-roles).
+  The tabs you see depend on your role. **Account Settings** is visible to everyone, but tabs like **Workspace Settings**, **Team Members**, **Roles**, **Credits**, and **Appearance** only appear if your role has permission to manage them. Owners see everything. If a tab is missing, ask a workspace Owner. See [Team Members & Roles](/docs/team-members-roles).
 </Callout>
 
 ## Account Settings
@@ -17,7 +17,7 @@ Your personal profile: update your **Name** and use **Change Password** to set a
 
 ## Workspace Settings
 
-Your company-wide profile: set the **Company Name** and the **Company Slug**, which is used in your public company URL — the address candidates see when they visit your careers presence. This is also where your company image lives. Learn how it all appears to candidates in [Your Company Page](/docs/your-company-page).
+Your company-wide profile: set the **Company Name** and the **Company Slug**, which is used in your public company URL, the address candidates see when they visit your careers presence. This is also where your company image lives. Learn how it all appears to candidates in [Your Company Page](/docs/your-company-page).
 
 ## Team Members
 
@@ -25,7 +25,7 @@ See everyone in your workspace and click **Invite** to add teammates by email, a
 
 ## Roles
 
-Manage what each role can do. Hivemind ships with system roles, and you can build custom roles with exactly the permissions you want — down to who can view billing, edit pipelines, or manage integrations. See [Team Members & Roles](/docs/team-members-roles).
+Manage what each role can do. Hivemind ships with system roles, and you can build custom roles with exactly the permissions you want, down to who can view billing, edit pipelines, or manage integrations. See [Team Members & Roles](/docs/team-members-roles).
 
 ## Apps & Integrations
 
@@ -41,7 +41,7 @@ Your workspace's fuel gauge. See your **Current Credits** balance, compare **Sub
 
 ## Email Services
 
-Connect the mailboxes Hivemind sends and receives candidate email through. Click **Add Account** to connect Gmail or any provider via IMAP/SMTP, verify the connection, and you're set. Without a connected mailbox, automated candidate emails won't go out — see [Email Integration & Inbox](/docs/email-integration-inbox).
+Connect the mailboxes Hivemind sends and receives candidate email through. Click **Add Account** to connect Gmail or any provider via IMAP/SMTP, verify the connection, and you're set. Without a connected mailbox, automated candidate emails won't go out. See [Email Integration & Inbox](/docs/email-integration-inbox).
 
 ## Appearance
 
