@@ -6,7 +6,7 @@ To add one: capture the shot, then replace the comment in the source file with `
 
 | # | Done | Page | Section (live link) | What to capture |
 |---|---|---|---|---|
-| 1 | ☐ | Assessment Types | [Question types in the assessment builder](https://docs.hivemind.hr/docs/assessment-types#question-types-in-the-assessment-builder) | The Question Types selection cards in the assessment builder |
+| 1 | ✅ | Assessment Types | [Question types in the assessment builder](https://docs.hivemind.hr/docs/assessment-types#question-types-in-the-assessment-builder) | The Question Types selection cards in the assessment builder |
 | 2 | ✅ | Assessments Overview | [The assessment library](https://docs.hivemind.hr/docs/assessments-overview#the-assessment-library) | The My Assessments page showing the assessments table, the Assessments/Analytics toggle, and the New Assessment button |
 | 3 | ☐ | Assessments Overview | [How assessments plug into pipelines](https://docs.hivemind.hr/docs/assessments-overview#how-assessments-plug-into-pipelines) | The Assessment Configuration panel in the pipeline builder with an assessment selected |
 | 4 | ☐ | Creating & Editing Assessments | [1. Create with the helper](https://docs.hivemind.hr/docs/creating-editing-assessments#1-create-with-the-helper) | The three-step assessment builder on the Review & Confirm step showing the composed question list |

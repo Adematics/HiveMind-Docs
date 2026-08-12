@@ -21,7 +21,7 @@ When you build an assessment, the **Question Types** step lets you combine any o
 
 - **Real-Time Open Ended**: "Dynamic real-time written responses." A live AI interview: the candidate converses by voice or text with **Hive**, Hivemind's AI interviewer, and the transcript is graded. Use it when you want interview-style depth without scheduling a call. See [AI Voice Interviews](/docs/ai-voice-interviews) for the phone-based equivalent.
 
-{/* 📸 Screenshot: The Question Types selection cards in the assessment builder */}
+![The Question Types selection cards in the assessment builder](https://rocketdevs-assets.s3.amazonaws.com/lark-files/%20asssesment%20type.png)
 
 <Callout icon="💡" theme="info">
   Candidates always see an overview screen first (question count, total minutes, and a **Question Breakdown** by type) before clicking **Start Assessment**. Progress saves automatically, and they can move between questions freely. More in [The Candidate Experience](/docs/the-candidate-experience).

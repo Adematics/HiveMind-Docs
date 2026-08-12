@@ -34,7 +34,7 @@ These steps evaluate candidates without you lifting a finger. Most of them email
 | **Personality** | A work-style questionnaire on collaboration, decision-making, and flexibility. | Understanding team fit and working preferences. |
 | **Skills** | Sends one of your [assessments](/docs/assessments-overview), with technical challenges or custom topics. | Verifying the abilities the role actually requires. |
 
-Key settings: **Resume Scoring** needs the **Job Description** to score against. **AI Phone Call** lets you set the opening message, the conversation prompt, and the voice. **Skills** links to an assessment you've built (a coding-focused variant appears as **Coding Assessment** on the canvas). The assessment and call steps all include **Smart Follow-Up Reminders**: up to three automatic nudges after a set number of days, sent by **Email**, **SMS**, or **Both (Email & SMS)**.
+Key settings: **Resume Scoring** needs the **Job Description** to score against. It can also screen on **true/false resume facts** you define (for example, *"5+ years of backend experience"*); pair those answers with a **Flow** step and candidates route down different branches automatically, so the pipeline does the first pass for you. **AI Phone Call** lets you set the opening message, the conversation prompt, and the voice. **Skills** links to an assessment you've built (a coding-focused variant appears as **Coding Assessment** on the canvas). The assessment and call steps all include **Smart Follow-Up Reminders**: up to three automatic nudges after a set number of days, sent by **Email**, **SMS**, or **Both (Email & SMS)**.
 
 ## Interviews
 

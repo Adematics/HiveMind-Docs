@@ -21,6 +21,8 @@ Before anything runs, a **Review your search** dialog shows the criteria Hivemin
 
 Use **Add filter** to add criteria yourself (including **Job title**, **Skill**, **Location**, **Industry**, **Company**, **Seniority**, **Company size**, **Company type**, and minimum years of **Experience**), or remove any chip you don't want. You need at least one **Required** filter before the **Search** button activates.
 
+Job titles also match **related titles** automatically: a search for *backend engineer* surfaces the people who wrote *server-side engineer* or *Node.js engineer* too, so a differently worded resume doesn't hide a good candidate. Review the parsed criteria in this dialog and adjust anything that misses your intent before running.
+
 {/* 📸 Screenshot: the Review your search dialog with criteria chips and the role dropdown */}
 
 ## 3. Read the results

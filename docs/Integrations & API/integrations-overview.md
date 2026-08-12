@@ -20,7 +20,7 @@ Hivemind connects to the tools you already hire with: your email, calendar, vide
 | **Twilio** | SMS to candidates. Connecting requires your Twilio **API key, secret and a caller number**. |
 | **Zapier** | Push Hivemind pipeline data into thousands of other apps via the Hivemind app on Zapier. |
 | **Stripe** | Powers payments for plans and credit purchases, managed from [Credits & Billing](/docs/credits-billing) rather than a connect card. |
-| **LinkedIn & WhatsApp** | Messaging channels for [Outreach Campaigns](/docs/outreach-campaigns): send LinkedIn connection requests, messages, and InMails, or message candidates on WhatsApp. |
+| **LinkedIn & WhatsApp** | Messaging channels for [Outreach Campaigns](/docs/outreach-campaigns): send LinkedIn connection requests, messages, and InMails, or message candidates on WhatsApp. A connected LinkedIn account also unlocks [LinkedIn Job Posting](/docs/linkedin-job-posting): publish any Hivemind job to LinkedIn in one click. |
 
 ## 2. Personal vs. company-wide connections
 
