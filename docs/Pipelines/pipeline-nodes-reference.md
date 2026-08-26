@@ -31,10 +31,10 @@ These steps evaluate candidates without you lifting a finger. Most of them email
 | **Resume Scoring** | AI analyzes and scores the candidate's resume against your job description. | As the first filter on almost every pipeline. |
 | **AI Phone Call** | An AI voice agent calls the candidate and conducts a conversational interview. | Prescreening at scale. See [AI Voice Interviews](/docs/ai-voice-interviews). |
 | **IQ** | A timed cognitive ability test covering verbal, numerical, logical, and spatial reasoning. | Roles needing analytical thinking and quick learning. |
-| **Personality** | A work-style questionnaire on collaboration, decision-making, and flexibility. | Understanding team fit and working preferences. |
+| **Personality** | A work-style questionnaire on collaboration, decision-making, and flexibility, or a full **DISC** profile. | Understanding team fit and working preferences. |
 | **Skills** | Sends one of your [assessments](/docs/assessments-overview), with technical challenges or custom topics. | Verifying the abilities the role actually requires. |
 
-Key settings: **Resume Scoring** needs the **Job Description** to score against. It can also screen on **true/false resume facts** you define (for example, *"5+ years of backend experience"*); pair those answers with a **Flow** step and candidates route down different branches automatically, so the pipeline does the first pass for you. **AI Phone Call** lets you set the opening message, the conversation prompt, and the voice. **Skills** links to an assessment you've built (a coding-focused variant appears as **Coding Assessment** on the canvas). The assessment and call steps all include **Smart Follow-Up Reminders**: up to three automatic nudges after a set number of days, sent by **Email**, **SMS**, or **Both (Email & SMS)**.
+Key settings: **Resume Scoring** needs the **Job Description** to score against. It can also screen on **true/false resume facts** you define (for example, *"5+ years of backend experience"*); pair those answers with a **Flow** step and candidates route down different branches automatically, so the pipeline does the first pass for you. **Personality** runs the original work-style questionnaire by default, and switching its variant to **DISC** runs a 28-block forced-choice profile instead, scored the moment the candidate submits (see [DISC Personality Profiles](/docs/disc-personality-profiles)). **AI Phone Call** lets you set the opening message, the conversation prompt, and the voice. **Skills** links to an assessment you've built (a coding-focused variant appears as **Coding Assessment** on the canvas). The assessment and call steps all include **Smart Follow-Up Reminders**: up to three automatic nudges after a set number of days, sent by **Email**, **SMS**, or **Both (Email & SMS)**.
 
 ## Interviews
 
@@ -80,3 +80,4 @@ Use these to plug in outside tools: an external testing platform, your HRIS, or 
 - Build the tests behind the Skills step in [Assessments Overview](/docs/assessments-overview)
 - Handle review checkpoints in [Managing Candidates in a Pipeline](/docs/managing-candidates-in-a-pipeline)
 - Configure AI calls in [AI Voice Interviews](/docs/ai-voice-interviews)
+- Read a behavioural profile in [DISC Personality Profiles](/docs/disc-personality-profiles)

@@ -3,7 +3,9 @@ title: Your Company Page
 hidden: false
 ---
 
-Your company page is the public careers site candidates see: your story, your culture, and every open role, all pulled straight from your pipelines. You build it with a drag-and-drop editor: open **Company Page** from the sidebar to get started.
+Your company page is the public careers site candidates see: your story, your culture, and every open role, all pulled straight from your pipelines. You build it with a drag-and-drop editor: open **Settings → Career Page** to get started.
+
+The builder used to sit on its own in the sidebar. It now lives in Settings alongside the rest of your company configuration, so branding, the page, and your workspace settings are all in one place. Everything below works exactly as it did.
 
 <Callout icon="💡" theme="info">
   The page builder needs a desktop or tablet screen (1024px or wider). The published page itself looks great on any device; there's even a built-in preview for desktop, tablet, and mobile.

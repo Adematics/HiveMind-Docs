@@ -11,6 +11,23 @@ Open **Outreach**; the **Search** tab is the default view. You'll see the prompt
 
 {/* 📸 Screenshot: the People Search start screen with the search box and detection pills */}
 
+### Or paste the job description
+
+The same box has a second mode. Switch it to **Job description** and paste the JD you are hiring against, in full, instead of writing a description yourself. Hivemind reads the requirements out of it and ignores the parts that are not about the person: the culture blurb, the benefits list, the equal-opportunity boilerplate.
+
+You get the same **Review your search** dialog afterwards, so a JD that asks for too much is something you can trim before you spend anything.
+
+Two small differences worth knowing:
+
+- The box grows as you paste, and **Enter** inserts a new line rather than running the search. Use the search button.
+- Each mode has its own length limit. Go over it and Hivemind tells you by how much, and suggests the other mode.
+
+Whichever mode you used last is the one waiting for you next time.
+
+<Callout icon="💡" theme="info">
+  Description mode is faster when you already know the shape of the person. Job description mode is better when the requirements are somebody else's and you would rather not summarize them by hand.
+</Callout>
+
 ## 2. Review your search
 
 Before anything runs, a **Review your search** dialog shows the criteria Hivemind parsed, grouped by category (job title, seniority, skills, location, industry, experience, company, and more). Each criterion has a role you can change:

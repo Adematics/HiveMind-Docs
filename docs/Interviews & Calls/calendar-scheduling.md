@@ -51,6 +51,8 @@ Interview bookings (the events tied to a candidate) can simply be dragged to a n
 Interview stages in your pipelines offer two **Booking Mode** options:
 
 - **Candidate Book**: the candidate sees your team's open slots on a **Book Your Interview** page, picks a time, and clicks **Confirm Booking**. They get an **Interview Booked!** confirmation and the meeting link by email, and they can reschedule themselves later.
+
+The booking page has a **Timezone** picker, set to the candidate's own timezone when the page loads. Every slot on the page is shown in whichever timezone is selected, so a candidate in another country reads times in theirs and never has to convert your working hours by hand. Changing the picker re-labels the slots; it does not change which slots are on offer, because those still come from your availability.
 - **Company Book**: the candidate submits their availability, and you pick the time from the pipeline's **Scheduler** tab using the **Schedule** button next to each candidate.
 
 See [Pipeline Nodes Reference](/docs/pipeline-nodes-reference) for configuring interview stages.

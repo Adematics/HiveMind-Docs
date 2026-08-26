@@ -5,7 +5,7 @@ hidden: false
 
 Settings is the control room for your Hivemind workspace: your personal account, your company profile, your team, integrations, credits, and the look of the app all live here. Open **Settings** from the sidebar and you'll see a list of tabs on the left; click any tab to jump to that area.
 
-{/* 📸 Screenshot: Settings page with the left sidebar showing all tabs (Account Settings, Workspace Settings, Team Members, Roles, Apps & Integrations, Credits, Email Services, Appearance) */}
+{/* 📸 Screenshot: Settings page with the left sidebar showing all tabs (Account Settings, Workspace Settings, Career Page, Team Members, Roles, Apps & Integrations, Credits, Email Services, Appearance) */}
 
 <Callout icon="💡" theme="info">
   The tabs you see depend on your role. **Account Settings** is visible to everyone, but tabs like **Workspace Settings**, **Team Members**, **Roles**, **Credits**, and **Appearance** only appear if your role has permission to manage them. Owners see everything. If a tab is missing, ask a workspace Owner. See [Team Members & Roles](/docs/team-members-roles).
@@ -19,6 +19,10 @@ Your personal profile: update your **Name** and use **Change Password** to set a
 
 Your company-wide profile: set the **Company Name** and the **Company Slug**, which is used in your public company URL, the address candidates see when they visit your careers presence. This is also where your company image lives. Learn how it all appears to candidates in [Your Company Page](/docs/your-company-page).
 
+## Career Page
+
+The drag-and-drop builder for your public careers site, and where you publish it. It moved here from its own sidebar entry, so the page and the company profile it draws on now sit side by side. Full walkthrough in [Your Company Page](/docs/your-company-page).
+
 ## Team Members
 
 See everyone in your workspace and click **Invite** to add teammates by email, assigning each a role as you go. Full details in [Team Members & Roles](/docs/team-members-roles).
@@ -29,7 +33,7 @@ Manage what each role can do. Hivemind ships with system roles, and you can buil
 
 ## Apps & Integrations
 
-Connect the tools Hivemind works alongside: Google (Calendar and Meet), LinkedIn and WhatsApp for outreach, Twilio for phone and SMS, your own OpenAI key, and ATS connections to Ashby and Greenhouse. This tab is also home to your **API keys** and **webhooks** for developers. Start with the [Integrations Overview](/docs/integrations-overview), or jump to [Public API](/docs/public-api-getting-started) and [Webhooks](/docs/webhooks).
+Connect the tools Hivemind works alongside: Google (Calendar and Meet), LinkedIn and WhatsApp for outreach, Twilio for phone and SMS, your own OpenAI key, and ATS connections to Ashby and Greenhouse. This tab is also home to your **API keys** and **webhooks** for developers, and to **connected apps**: the AI assistants authorized against your workspace over MCP, each revocable from here. See [Hivemind MCP Server](/docs/hivemind-mcp-server). Start with the [Integrations Overview](/docs/integrations-overview), or jump to [Public API](/docs/public-api-getting-started) and [Webhooks](/docs/webhooks).
 
 ## Credits
 

@@ -78,6 +78,39 @@ The complete endpoint documentation lives in the [API Reference](/reference). Hi
 
 - **Candidates**: list and create candidates, fetch or update one, and `rewind` / `fast-forward` a candidate through pipeline stages.
 - **Pipelines**: list pipelines, fetch one, and update it.
+- **Assessments and questions**: read-only endpoints for assessment performance, covered below.
+
+## 7. Pull assessment results
+
+Six read-only endpoints let you take assessment performance out of the app and into your own reporting, instead of exporting screens by hand:
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /assessments` | Your assessment catalog. |
+| `GET /assessments/{id}` | One assessment, with its questions. |
+| `GET /assessment-results` | Candidate runs of an assessment. |
+| `GET /questions` | Your question catalog. |
+| `GET /questions/{id}` | One question, with the skills it covers. |
+| `GET /question-results` | Per-answer rows, one per question a candidate answered. |
+
+All six live under the same `/api/public/v1` base path and take the same bearer key, pagination and sorting as the rest of the API.
+
+### Two kinds of result, one resource
+
+Assessments reach candidates two ways in Hivemind: sent on their own, and run as a step inside a pipeline. Those are stored separately, and the result endpoints unify them behind a **`source`** field so you can query both at once.
+
+<Callout icon="⚠️" theme="warn">
+  Read `source` before you join anything. `candidate_id` points at a different record depending on which kind of run the row came from, so joining across both without checking `source` will silently mismatch candidates.
+</Callout>
+
+### Derived fields
+
+Two fields on standalone runs are computed rather than stored:
+
+- **`score`** is the mean of the graded answer scores, the same formula the in-app analytics use.
+- **`status`** is derived from the answers, because the stored column is unset on the overwhelming majority of historical rows.
+
+The `?status=` filter reproduces that derivation in the query itself, so a filtered list can never disagree with the `status` each row reports back.
 
 ## What's next
 

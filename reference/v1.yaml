@@ -64,6 +64,44 @@ tags:
       integrations pause and rename without touching the UI. Activation is
       deliberately UI-only because it requires validating the node graph
       and form configuration.
+  - name: Assessments
+    description: |
+      An Assessment is a set of questions a candidate answers. Hivemind runs
+      them in two places, and the API reports both through one resource:
+
+      - **standalone** — a link sent to someone who is not (yet) in a
+        pipeline. Their run lives on its own; there is no pipeline.
+      - **pipeline** — an assessment node inside a pipeline's automation
+        graph. The run belongs to a Candidate progressing through that
+        pipeline.
+
+      `GET /assessments` is the catalog (what assessments exist).
+      `GET /assessment-results` is the analytics surface (who took what, and
+      how they scored). Every result row carries a `source` field naming
+      which of the two above produced it — read it before joining, because
+      `candidate_id` points at a different table in each case.
+
+      **Derived fields.** The standalone run has no stored overall score and
+      no completion timestamp, so `score`, `submitted_at` and `evaluated_at`
+      are computed from its answers on read. `score` is the mean of graded
+      answer scores — computed the same way as the in-app analytics, at
+      per-run rather than company-wide grain. Pipeline
+      runs use the stored node score. See the `AssessmentResult` schema for
+      the per-field breakdown.
+  - name: Questions
+    description: |
+      A Question is one item in a company's question bank, plus the shared
+      Hivemind bank (`is_shared: true`) that every company can use.
+
+      `GET /questions` is the catalog. `GET /question-results` returns one
+      row per candidate answer — score, grading state, grader output and the
+      raw response — across both standalone and pipeline assessments, with
+      the same `source` discriminator.
+
+      Together these support question-difficulty and success-rate analysis:
+      pull the answers for a `question_id` and aggregate `score` yourself.
+      Server-side aggregates (mean, median, pass rate) are not part of this
+      release.
   - name: Meta
     description: |
       Utility endpoints — key validation, server health.
@@ -868,6 +906,396 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
+  /api/public/v1/assessments:
+    get:
+      tags: [Assessments]
+      summary: List assessments
+      description: |
+        The assessment catalog for the calling company, paginated. Returns
+        metadata and a `question_count`; it does not return candidate
+        results — use `GET /assessment-results` for those.
+      operationId: listAssessments
+      parameters:
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/PerPageParam' }
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [created_at, -created_at, updated_at, -updated_at, title, -title]
+            default: -created_at
+        - in: query
+          name: difficulty
+          description: |
+            Comma-separated list (`_in`). Case-sensitive; stored values are
+            capitalized — `Easy`, `Medium`, `Hard`.
+          schema: { type: string, example: 'Easy,Medium' }
+        - in: query
+          name: q
+          description: Case-insensitive substring match across `title` and `description`.
+          schema: { type: string, maxLength: 256 }
+        - in: query
+          name: created_after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: created_before
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: A page of assessments.
+          headers:
+            X-RateLimit-Limit-Minute: { $ref: '#/components/headers/RateLimitMinute' }
+            X-RateLimit-Remaining-Minute: { $ref: '#/components/headers/RateLimitRemainingMinute' }
+            X-Request-Id: { $ref: '#/components/headers/RequestId' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssessmentListResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/public/v1/assessments/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        description: Assessment UUID.
+
+    get:
+      tags: [Assessments]
+      summary: Fetch an assessment
+      description: |
+        A single assessment, plus its questions in link-creation order.
+      operationId: getAssessment
+      responses:
+        '200':
+          description: The assessment.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssessmentDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/AssessmentNotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/public/v1/assessment-results:
+    get:
+      tags: [Assessments]
+      summary: List assessment results
+      description: |
+        One row per candidate run of an assessment, unified across standalone
+        and pipeline assessments. Read `source` on every row before joining —
+        it tells you which system produced the row and therefore what
+        `candidate_id` refers to.
+
+        This is a top-level resource rather than
+        `/assessments/{id}/results` because a single query legitimately spans
+        assessments. Narrow with `assessment_id` when you want just one.
+
+        ### Ordering
+        `created_at` only. It is the one ordering key backed by a real column
+        on both underlying tables, which lets the two sides be paged in the
+        database and merged exactly. `score` and `submitted_at` are derived
+        on the standalone side (see `AssessmentResult`) and cannot be ordered
+        server-side. Pinning `source` does NOT unlock extra sort keys —
+        `sort=-score` returns `400` regardless of source. Sort a retrieved
+        page client-side if you need score order.
+
+        ### Deep pagination
+        When a query can match both sources, each side is read up to
+        `page × per_page` rows so the merged page is exact. Beyond 2 000
+        combined rows that read is refused with `400
+        pagination_limit_exceeded`.
+
+        The limit is computed from `page × per_page` alone, before any row is
+        read, so only the filters that collapse the query to ONE source lift
+        it: `source=standalone`, `source=pipeline`, or `pipeline_id` (which
+        implies pipeline, since standalone assessments have no pipeline). A
+        single source is paged directly in the database and is not capped.
+        Other filters — `assessment_id`, `candidate_id`, date ranges — reduce
+        how many pages you need but do NOT raise the limit.
+
+        `has_more` accounts for this: it reports `false` once the next page
+        would be unreachable, even if `total` is larger.
+      operationId: listAssessmentResults
+      parameters:
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/PerPageParam' }
+        - { $ref: '#/components/parameters/SourceParam' }
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [created_at, -created_at]
+            default: -created_at
+        - in: query
+          name: assessment_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: pipeline_id
+          description: |
+            Pipeline-only filter. Supplying it excludes standalone results,
+            because a standalone assessment has no pipeline. Combining it
+            with `source=standalone` is contradictory and returns an empty
+            page.
+          schema: { type: string, format: uuid }
+        - in: query
+          name: candidate_id
+          description: |
+            Meaning depends on source. For `standalone` it matches the
+            standalone taker's id; for `pipeline` it matches the pipeline
+            `Candidate.id`. The same person taking both kinds of assessment
+            has two different ids.
+          schema: { type: string, format: uuid }
+        - in: query
+          name: status
+          description: |
+            Comma-separated list of `complete`, `in_progress`,
+            `pending_credits`, `pending_valid_openai_key`. Validated — an
+            unrecognised value returns `400 invalid_filter` rather than an
+            empty page. `complete` and `in_progress` apply to both sources.
+            `pending_credits` and `pending_valid_openai_key` are
+            standalone-only and match no pipeline rows.
+          schema:
+            type: string
+            example: 'complete,in_progress'
+        - in: query
+          name: created_after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: created_before
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: A page of assessment results.
+          headers:
+            X-RateLimit-Limit-Minute: { $ref: '#/components/headers/RateLimitMinute' }
+            X-RateLimit-Remaining-Minute: { $ref: '#/components/headers/RateLimitRemainingMinute' }
+            X-Request-Id: { $ref: '#/components/headers/RequestId' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssessmentResultListResponse' }
+        '400':
+          description: |
+            Invalid filter, or a paginated read too deep to merge exactly.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                pagination_limit_exceeded:
+                  summary: Paging past the cross-source merge cap
+                  value:
+                    error:
+                      code: pagination_limit_exceeded
+                      message: 'Reading page 11 at per_page 200 would scan 2200 rows per source, over the 2000 limit for a combined standalone+pipeline query. Collapse to one source — pass `source=standalone`, `source=pipeline`, or a `pipeline_id` filter — and this limit does not apply. Other filters (assessment_id, candidate_id, date ranges) reduce how many pages you need but do not raise this limit.'
+                      details: { max_rows_scanned: 2000, requested_rows_scanned: 2200, hint: 'source=standalone | source=pipeline | pipeline_id=<uuid>' }
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+                invalid_filter:
+                  summary: Unknown query parameter
+                  value:
+                    error:
+                      code: invalid_filter
+                      message: 'Unknown query parameter(s): assesment_id'
+                      details: { unknown: [assesment_id] }
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/public/v1/questions:
+    get:
+      tags: [Questions]
+      summary: List questions
+      description: |
+        The question catalog. Returns the calling company's own questions
+        plus the shared Hivemind bank, matching what the company sees in-app.
+        Filter with `shared` to separate them.
+      operationId: listQuestions
+      parameters:
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/PerPageParam' }
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [created_at, -created_at, updated_at, -updated_at, title, -title]
+            default: -created_at
+        - in: query
+          name: assessment_id
+          description: |
+            Only questions belonging to this assessment. The assessment must
+            belong to the calling company; passing another company's id
+            matches nothing rather than revealing its composition.
+          schema: { type: string, format: uuid }
+        - in: query
+          name: type
+          description: |
+            Comma-separated list (`_in`). Known values: `MCQ`, `Coding`,
+            `Video`, `OpenEnded`, `CodingRealtime`, `OpenEndedRealtime`.
+            Not enforced — treat as an opaque string.
+          schema: { type: string, example: 'MCQ,Coding' }
+        - in: query
+          name: difficulty
+          description: |
+            Comma-separated list (`_in`). Case-sensitive; stored values are
+            capitalized — `Easy`, `Medium`, `Hard`.
+          schema: { type: string, example: 'Hard' }
+        - in: query
+          name: shared
+          description: |
+            `true` returns only the shared Hivemind bank, `false` only the
+            company's own questions. Omit for both.
+          schema: { type: boolean }
+        - in: query
+          name: q
+          description: Case-insensitive substring match across `title` and `description`.
+          schema: { type: string, maxLength: 256 }
+        - in: query
+          name: created_after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: created_before
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: A page of questions.
+          headers:
+            X-RateLimit-Limit-Minute: { $ref: '#/components/headers/RateLimitMinute' }
+            X-RateLimit-Remaining-Minute: { $ref: '#/components/headers/RateLimitRemainingMinute' }
+            X-Request-Id: { $ref: '#/components/headers/RequestId' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuestionListResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/public/v1/questions/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+        description: Question UUID.
+
+    get:
+      tags: [Questions]
+      summary: Fetch a question
+      description: |
+        A single question with its skill labels. Resolves shared-bank
+        questions as well as the company's own.
+
+        The grading `config` — which holds the MCQ answer key — is
+        deliberately not returned. See the `QuestionDetail` schema.
+      operationId: getQuestion
+      responses:
+        '200':
+          description: The question.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuestionDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/QuestionNotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/public/v1/question-results:
+    get:
+      tags: [Questions]
+      summary: List question results
+      description: |
+        One row per candidate answer to a single question, unified across
+        standalone and pipeline assessments and discriminated by `source`.
+        This is the grain to aggregate for question-difficulty and
+        success-rate analysis: filter by `question_id` and reduce over
+        `score`.
+
+        Each row includes the candidate's raw `answer` and the grader's
+        `evaluation_details`, both unbounded JSON. `per_page` is therefore
+        capped at 100 here rather than the usual 200.
+
+        Deep pagination works as on `GET /assessment-results`, but with a
+        **lower scan budget: 2 000 rows per source there, 500 here**, because
+        these rows are far heavier. At the default `per_page` that is 5 pages
+        before `400 pagination_limit_exceeded`; the same escape applies —
+        pin `source=` (or `pipeline_id`) and the limit does not apply at all.
+      operationId: listQuestionResults
+      parameters:
+        - { $ref: '#/components/parameters/PageParam' }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+          description: Page size. Capped at 100 — rows carry unbounded JSON.
+        - { $ref: '#/components/parameters/SourceParam' }
+        - in: query
+          name: sort
+          description: |
+            Ungraded rows (`score` / `evaluated_at` null) always sort last,
+            in both directions.
+          schema:
+            type: string
+            enum: [created_at, -created_at, score, -score, evaluated_at, -evaluated_at]
+            default: -created_at
+        - in: query
+          name: question_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: assessment_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: pipeline_id
+          description: |
+            Pipeline-only filter — see `GET /assessment-results`.
+          schema: { type: string, format: uuid }
+        - in: query
+          name: candidate_id
+          description: |
+            Source-dependent, exactly as on `GET /assessment-results`.
+          schema: { type: string, format: uuid }
+        - in: query
+          name: evaluation_status
+          description: |
+            Comma-separated list of `pending`, `evaluated`, `unable_to_grade`.
+            Validated — an unrecognised value returns `400 invalid_filter`
+            rather than an empty page.
+          schema: { type: string, example: 'evaluated' }
+        - in: query
+          name: created_after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: created_before
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: A page of question results.
+          headers:
+            X-RateLimit-Limit-Minute: { $ref: '#/components/headers/RateLimitMinute' }
+            X-RateLimit-Remaining-Minute: { $ref: '#/components/headers/RateLimitRemainingMinute' }
+            X-Request-Id: { $ref: '#/components/headers/RequestId' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuestionResultListResponse' }
+        '400':
+          description: |
+            Invalid filter, or a paginated read too deep to merge exactly.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalid_evaluation_status:
+                  summary: Unrecognised evaluation_status value
+                  value:
+                    error:
+                      code: invalid_filter
+                      message: 'evaluation_status must be one of: pending, evaluated, unable_to_grade'
+                      details:
+                        field: evaluation_status
+                        allowed: [pending, evaluated, unable_to_grade]
+                        invalid: [graded]
+                      request_id: req_8f3e42a1b56c4d7f90e12345
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
 webhooks:
   candidateApplied:
     post:
@@ -1156,6 +1584,16 @@ components:
           - total_score
           - '-total_score'
         default: '-created_at'
+    SourceParam:
+      in: query
+      name: source
+      description: |
+        Restrict to one underlying system. Omit to get both, merged. Pinning
+        a source is also the escape hatch for deep pagination — a single
+        source is paged directly in the database with no merge cap.
+      schema:
+        type: string
+        enum: [standalone, pipeline]
   headers:
     RequestId:
       description: Server-generated request id; echo when contacting support.
@@ -2136,6 +2574,375 @@ components:
         request_id:
           type: string
           description: Echoes `X-Request-Id`.
+    Assessment:
+      type: object
+      required: [id, question_count, created_at]
+      properties:
+        id:             { type: string, format: uuid }
+        title:          { type: string, nullable: true }
+        description:    { type: string, nullable: true }
+        difficulty:
+          type: string
+          nullable: true
+          description: 'Case-sensitive. Known values: `Easy`, `Medium`, `Hard`.'
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Free-form configuration blob. Shape is not part of this contract.
+        question_count: { type: integer, description: Number of questions in this assessment. }
+        created_at:     { type: string, format: date-time }
+        updated_at:     { type: string, format: date-time, nullable: true }
+      example:
+        id: 6b2d1f88-7c14-4a92-9e03-1d5a8c2b4e77
+        title: Senior Backend Screen
+        description: Coding plus system-design questions.
+        difficulty: Hard
+        metadata: {}
+        question_count: 8
+        created_at: '2026-03-02T11:00:00.000Z'
+        updated_at: '2026-05-19T08:45:00.000Z'
+    AssessmentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Assessment'
+        - type: object
+          required: [questions]
+          properties:
+            questions:
+              type: array
+              items: { $ref: '#/components/schemas/AssessmentQuestionRef' }
+    AssessmentListResponse:
+      type: object
+      required: [data, page, per_page, total, total_pages, has_more]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Assessment' }
+        page:        { type: integer, example: 1 }
+        per_page:    { type: integer, example: 50 }
+        total:       { type: integer, example: 7 }
+        total_pages: { type: integer, example: 1 }
+        has_more:    { type: boolean }
+    AssessmentQuestionRef:
+      type: object
+      description: Lightweight question reference returned inside `AssessmentDetail`.
+      required: [id]
+      properties:
+        id:         { type: string, format: uuid }
+        title:      { type: string, nullable: true }
+        type:       { type: string, nullable: true }
+        difficulty: { type: string, nullable: true }
+        duration:   { type: integer, nullable: true, description: Time limit in MINUTES, if set. }
+    AssessmentResult:
+      type: object
+      description: |
+        One candidate's run of one assessment. `source` says which system
+        produced the row and governs how several fields are populated:
+
+        | field | `standalone` | `pipeline` |
+        |---|---|---|
+        | `id` | the standalone taker row | the node-response row |
+        | `candidate_id` | same as `id` — standalone takers are their own record | the pipeline `Candidate.id` |
+        | `pipeline_id` / `node_id` | always `null` | the pipeline and assessment node |
+        | `score` | **derived** — mean of graded answer scores | the stored node score; falls back to the mean of graded answers if the aggregator has not run yet |
+        | `started_at` | when the run began | always `null` — the row is created on submission, so no start time exists |
+        | `submitted_at` | **derived** — timestamp of the last answer | when the response was submitted |
+        | `evaluated_at` | **derived** — when the last answer finished grading | same |
+
+        ### `status` means grading state
+        `complete` means every answer the candidate submitted has been
+        **graded** — not that they answered every question. The two are not
+        the same, and the latter cannot be reported honestly: a pipeline
+        assessment node picks its own question subset via node config, so the
+        parent assessment's question count is not a valid denominator.
+
+        Standalone rows have a stored status column, but it is unset on the
+        overwhelming majority of records, so it is used when present and
+        derived by the rule above otherwise. The `?status=` filter applies
+        exactly the same rule in the database, so the filter and this field
+        cannot disagree.
+
+        For true completion, use `answers_total` against whatever count your
+        own system expects.
+      required: [id, source, status, candidate_id, answers_total, answers_evaluated, created_at]
+      properties:
+        source:
+          type: string
+          enum: [standalone, pipeline]
+        id:                  { type: string, format: uuid }
+        assessment_id:       { type: string, format: uuid, nullable: true }
+        assessment_title:    { type: string, nullable: true }
+        pipeline_id:         { type: string, format: uuid, nullable: true }
+        node_id:             { type: string, format: uuid, nullable: true }
+        candidate_id:        { type: string, format: uuid }
+        candidate_name:      { type: string, nullable: true }
+        candidate_email:     { type: string, nullable: true }
+        status:
+          type: string
+          description: |
+            Always present — derived when the stored column is unset, so it
+            is never null. Grading state; see the schema description. `complete` /
+            `in_progress` on both sources. `pending_credits` and
+            `pending_valid_openai_key` come from the standalone status column
+            only and are never derived.
+        score:
+          type: number
+          nullable: true
+          description: |
+            Null when no answer produced a gradable score. That has TWO
+            causes, and they are not distinguishable from this field alone:
+            grading has not run yet, or every answer came back
+            `unable_to_grade`. Compare `answers_evaluated` with
+            `answers_total` to tell them apart — if they are equal, grading
+            has finished and a null score is final, not pending. Polling will
+            never change it.
+
+            Scale follows the underlying questions; do not assume 0–100.
+
+            Treat the value as **provisional while
+            `answers_evaluated < answers_total`**. On pipeline rows the score
+            is normally the stored node score; until grading finishes, it is
+            computed from the answers graded so far and may move.
+        answers_total:
+          type: integer
+          description: |
+            Answers the candidate actually submitted. Not the number of
+            questions in the assessment — a pipeline node may use a subset.
+        answers_evaluated:
+          type: integer
+          description: |
+            How many of those answers have reached a terminal grading state.
+            This includes answers marked `unable_to_grade` — the candidate
+            submitted, grading failed unrecoverably, and it will not be
+            retried. Such answers count as evaluated (so the run reports
+            `complete`) but contribute nothing to `score`. A run where every
+            answer failed reports `status: complete`,
+            `answers_evaluated == answers_total`, and `score: null`.
+
+            To exclude ungradable answers from your own metrics, pull the
+            per-answer rows from `GET /question-results` and filter on
+            `evaluation_status`.
+        started_at:          { type: string, format: date-time, nullable: true }
+        submitted_at:        { type: string, format: date-time, nullable: true }
+        evaluated_at:        { type: string, format: date-time, nullable: true }
+        created_at:          { type: string, format: date-time }
+      example:
+        id: c41b7e05-9d3a-4f61-8b22-7e0c5a1d9f34
+        source: pipeline
+        assessment_id: 6b2d1f88-7c14-4a92-9e03-1d5a8c2b4e77
+        assessment_title: Senior Backend Screen
+        pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
+        node_id: 5c2e9d77-8a3b-4f55-bb12-c0e1d3a4b507
+        candidate_id: 9f1c8e42-4b7d-4ae6-8b3a-2a4f0d7c5e10
+        candidate_name: Alice Johnson
+        candidate_email: alice@example.com
+        status: complete
+        score: 78.5
+        answers_total: 8
+        answers_evaluated: 8
+        started_at: null
+        submitted_at: '2026-04-23T14:02:00.000Z'
+        evaluated_at: '2026-04-23T14:09:31.000Z'
+        created_at: '2026-04-23T14:02:00.000Z'
+    AssessmentResultListResponse:
+      type: object
+      required: [data, page, per_page, total, total_pages, has_more]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/AssessmentResult' }
+        page:        { type: integer, example: 1 }
+        per_page:    { type: integer, example: 50 }
+        total:
+          type: integer
+          example: 318
+          description: |
+            Combined count across every source the query can match, not the
+            count within one source.
+        total_pages: { type: integer, example: 7 }
+        has_more:    { type: boolean }
+
+    # ── Questions ─────────────────────────────────────────────────────
+    Question:
+      type: object
+      required: [id, is_shared, created_at]
+      properties:
+        id:          { type: string, format: uuid }
+        title:       { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        type:
+          type: string
+          nullable: true
+          description: |
+            Known values: `MCQ`, `Coding`, `Video`, `OpenEnded`,
+            `CodingRealtime`, `OpenEndedRealtime`. Treat as opaque.
+        difficulty:
+          type: string
+          nullable: true
+          description: 'Case-sensitive. Known values: `Easy`, `Medium`, `Hard`.'
+        duration:    { type: integer, nullable: true, description: Time limit in MINUTES, if set. }
+        is_shared:
+          type: boolean
+          description: |
+            True for the shared Hivemind question bank, which every company
+            can read and use. False for questions the company authored.
+        created_at:  { type: string, format: date-time }
+        updated_at:  { type: string, format: date-time, nullable: true }
+      example:
+        id: 1e7a4c93-2b58-4d06-a1f7-8c39d5e0b264
+        title: Design a rate limiter
+        description: Open-ended system design prompt.
+        type: OpenEnded
+        difficulty: Hard
+        duration: 15
+        is_shared: false
+        created_at: '2026-02-11T10:15:00.000Z'
+        updated_at: null
+    QuestionDetail:
+      description: |
+        The question's grading `config` is deliberately **not** exposed. For
+        MCQ items it contains the answer key, and for other types the grading
+        scaffolding — neither is needed for analytics, and an API key is a
+        long-lived credential that often ends up in a BI tool or notebook.
+      allOf:
+        - $ref: '#/components/schemas/Question'
+        - type: object
+          required: [skills]
+          properties:
+            skills:
+              type: array
+              items: { type: string }
+              description: Skill labels tagged on this question.
+    QuestionListResponse:
+      type: object
+      required: [data, page, per_page, total, total_pages, has_more]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Question' }
+        page:        { type: integer, example: 1 }
+        per_page:    { type: integer, example: 50 }
+        total:       { type: integer, example: 142 }
+        total_pages: { type: integer, example: 3 }
+        has_more:    { type: boolean }
+    QuestionResult:
+      type: object
+      description: |
+        One candidate's answer to one question. Unlike `AssessmentResult`,
+        the scored fields here are stored, not derived — both underlying
+        tables carry real `score`, `evaluation_status`, `created_at` and
+        `evaluated_at` columns. Only `source`, and the question/assessment
+        metadata lifted from joins, are assembled by the API.
+
+        Join back to `GET /assessment-results` on
+        `assessment_result_id` → that resource's `id`, matching on `source`.
+      required: [id, source, assessment_result_id, question_id, candidate_id, evaluation_status, created_at]
+      properties:
+        source:
+          type: string
+          enum: [standalone, pipeline]
+        id:                   { type: string, format: uuid }
+        assessment_result_id:
+          type: string
+          format: uuid
+          description: |
+            Always present — the underlying join columns are NOT NULL on both
+            sources, so this join is reliable.
+            The run this answer belongs to. Equals the `id` of the
+            corresponding `AssessmentResult` with the same `source`.
+        assessment_id:        { type: string, format: uuid, nullable: true }
+        assessment_title:     { type: string, nullable: true }
+        question_id:          { type: string, format: uuid }
+        question_title:       { type: string, nullable: true }
+        question_type:        { type: string, nullable: true }
+        question_difficulty:  { type: string, nullable: true }
+        pipeline_id:          { type: string, format: uuid, nullable: true, description: Null on standalone rows. }
+        candidate_id:
+          type: string
+          format: uuid
+          description: |
+            Source-dependent, exactly as on `AssessmentResult`: the
+            standalone taker's id when `source=standalone`, the pipeline
+            `Candidate.id` when `source=pipeline`. Read `source` before
+            joining on it.
+        candidate_name:       { type: string, nullable: true }
+        candidate_email:      { type: string, nullable: true }
+        answer:
+          nullable: true
+          description: |
+            The candidate's raw submission. Shape depends on `question_type`
+            — a chosen option for MCQ, source text for Coding, a media
+            reference for Video. Unbounded; not part of this contract.
+        score:
+          type: number
+          nullable: true
+          description: Null until the answer is graded. Scale follows the question.
+        evaluation_status:
+          type: string
+          enum: [pending, evaluated, unable_to_grade]
+          description: |
+            `evaluated` includes a legitimate score of 0 (e.g. no
+            submission). `unable_to_grade` means the candidate answered but
+            grading failed unrecoverably — exclude these when computing
+            averages, or they will read as missing rather than as failures.
+        evaluation_details:
+          nullable: true
+          description: |
+            Grader output — rubric scores, feedback, and the candidate's
+            `selectedChoice` for MCQ items. Shape varies by question type and
+            is not part of this contract.
+
+            **Answer keys are stripped.** The MCQ grader persists the correct
+            answer into this blob; those fields (`correctChoice` and
+            equivalents) are removed at every nesting depth before the
+            response is written. The candidate's own selection is retained.
+
+            This does not make MCQ answer keys secret, and you should not rely
+            on it as though it did. `score` for an MCQ is an equality check
+            against the correct choice, so any row with `score: 100` reveals
+            the answer through its own `answer` payload. Returning responses
+            and scores is the purpose of this endpoint; treat questions as
+            semi-public once candidates have answered them.
+        created_at:           { type: string, format: date-time }
+        evaluated_at:         { type: string, format: date-time, nullable: true }
+      example:
+        id: 7d0e2b46-3f81-4c9a-95e7-0a6b8c1d2e53
+        source: pipeline
+        assessment_result_id: c41b7e05-9d3a-4f61-8b22-7e0c5a1d9f34
+        assessment_id: 6b2d1f88-7c14-4a92-9e03-1d5a8c2b4e77
+        assessment_title: Senior Backend Screen
+        question_id: 1e7a4c93-2b58-4d06-a1f7-8c39d5e0b264
+        question_title: Design a rate limiter
+        question_type: OpenEnded
+        question_difficulty: Hard
+        pipeline_id: 3a8b2f9c-1e44-4f12-9d7c-6b0a8d3e1f22
+        candidate_id: 9f1c8e42-4b7d-4ae6-8b3a-2a4f0d7c5e10
+        candidate_name: Alice Johnson
+        candidate_email: alice@example.com
+        answer: { text: 'Token bucket per tenant, backed by Redis…' }
+        score: 82
+        evaluation_status: evaluated
+        evaluation_details: { rubric: { correctness: 4, clarity: 5 } }
+        created_at: '2026-04-23T14:02:00.000Z'
+        evaluated_at: '2026-04-23T14:09:31.000Z'
+    QuestionResultListResponse:
+      type: object
+      required: [data, page, per_page, total, total_pages, has_more]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/QuestionResult' }
+        page:        { type: integer, example: 1 }
+        per_page:    { type: integer, example: 50 }
+        total:
+          type: integer
+          example: 2544
+          description: |
+            Combined count across every source the query can match.
+        total_pages: { type: integer, example: 51 }
+        has_more:    { type: boolean }
+
+    # ── Webhook payloads ──────────────────────────────────────────────
   responses:
     BadRequest:
       description: Malformed request (validation, bad UUID, unknown filter, etc.).
@@ -2270,4 +3077,33 @@ components:
             error:
               code: service_unavailable
               message: Rate limit temporarily unavailable
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    AssessmentNotFound:
+      description: |
+        Assessment not found OR belongs to a different company. We return 404
+        in both cases to avoid leaking row existence across tenants.
+
+        A malformed (non-UUID) `id` also returns 404 rather than 400.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            error:
+              code: assessment_not_found
+              message: Assessment not found
+              request_id: req_8f3e42a1b56c4d7f90e12345
+    QuestionNotFound:
+      description: |
+        Question not found, OR owned by a different company. Shared-bank
+        questions (`is_shared: true`) resolve for every company, so a 404
+        here means the id is unknown or privately owned elsewhere.
+
+        A malformed (non-UUID) `id` also returns 404 rather than 400.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            error:
+              code: question_not_found
+              message: Question not found
               request_id: req_8f3e42a1b56c4d7f90e12345

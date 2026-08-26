@@ -28,6 +28,12 @@ Need the data elsewhere? Click **Export** to download the current view (rows, co
 
 Clicking a row opens a quick-view panel with the essentials: score, contact details, **Highlights**, **Application Details**, recent **Responses**, **Comments**, and **Tasks**. Use the arrows to flip through candidates without leaving the list, or click **Full Profile** to open the complete record.
 
+### Fix a wrong email address
+
+A typo in an email address used to mean the candidate was unreachable for good. Now you can correct it in place: hover the email on the candidate's **Highlights** card and use the edit control beside it.
+
+The new address has to be unique within that candidate's pipeline. If another candidate there already uses it, the change is refused rather than quietly merging two people into one record.
+
 The full profile organizes everything into tabs:
 
 - **Overview**: highlights, application details, and anything **Awaiting your review**.
