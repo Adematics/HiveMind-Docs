@@ -13,6 +13,26 @@ hidden: false
 
 <br />
 
+## What's New
+
+<Cards>
+  <Card title="Dashboards" href="/docs/dashboards-overview" icon="fa-duotone fa-chart-line">Pipeline conversion, interviews, and credits at a glance</Card>
+
+  <Card title="DISC Personality Profiles" href="/docs/disc-personality-profiles" icon="fa-duotone fa-brain">See how candidates prefer to work</Card>
+
+  <Card title="Hivemind MCP Server" href="/docs/hivemind-mcp-server" icon="fa-duotone fa-robot">Use Hivemind from Claude, ChatGPT, or Copilot</Card>
+
+  <Card title="Public API" href="/docs/public-api-getting-started" icon="fa-duotone fa-code">Connect your own systems with the REST API</Card>
+
+  <Card title="LinkedIn Job Posting" href="/docs/linkedin-job-posting" icon="fa-brands fa-linkedin">Publish jobs to LinkedIn in one click</Card>
+
+  <Card title="Calling Candidates" href="/docs/calling-candidates" icon="fa-duotone fa-phone-volume">Recorded, transcribed calls from the candidate profile</Card>
+
+  <Card title="Reviewing Manual Interviews" href="/docs/reviewing-manual-interviews" icon="fa-duotone fa-clipboard-list">Recordings, notes, and transcripts in one place</Card>
+</Cards>
+
+<br />
+
 ## The Basics
 
 <Cards>
@@ -25,6 +45,8 @@ hidden: false
   <Card title="Interviews & Calls" href="/docs/ai-voice-interviews" icon="fa-duotone fa-phone">AI voice interviews, calls, and scheduling</Card>
 
   <Card title="Outreach & Inbox" href="/docs/outreach-campaigns" icon="fa-duotone fa-paper-plane">Campaigns, people search, and email</Card>
+
+  <Card title="Dashboards & Reporting" href="/docs/dashboards-overview" icon="fa-duotone fa-chart-pie">Hiring metrics and reports at a glance</Card>
 
   <Card title="Company Page" href="/docs/your-company-page" icon="fa-duotone fa-building">Build your public careers page</Card>
 </Cards>
