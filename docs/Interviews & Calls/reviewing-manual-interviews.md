@@ -3,7 +3,7 @@ title: Reviewing Manual Interviews
 hidden: false
 ---
 
-When your team runs a **Video** or **Phone** interview step, everything the interview produced comes back to one place on the candidate's record: the recording, the notes, and the transcript, stacked under the node they belong to. You watch, read the assessment, and check the exact wording without leaving the page.
+When your team runs a **Video Interview** or **Phone Interview** step, everything the interview produced comes back to one place on the candidate's record: the recording, the notes, and the transcript, stacked under the node they belong to. You watch, read the assessment, and check the exact wording without leaving the page.
 
 Open the candidate, find the interview step in their report, and the review surface is right there.
 
@@ -17,7 +17,7 @@ Open the candidate, find the interview step in their report, and the review surf
 
 **The transcript.** The verbatim record of what was said. Click any moment in it and the recording jumps to that point and starts playing, which is the fastest way to check a quote you are not sure you read correctly.
 
-Badges at the top tell you the state of things at a glance: whether the candidate joined, and whether the recording is **ready** or still **processing**. A recording that is still being prepared says so rather than showing an empty player.
+Badges at the top tell you the state of things at a glance: whether the candidate **Attended**, was a **No-show**, or attendance is uncertain, and whether there is a **Recording ready**, a **Recording pending**, or **No recording**. A recording that is still being prepared says **Recording is processing** rather than showing an empty player.
 
 <Callout icon="💡" theme="info">
   The surface renders whatever exists. An interview with no video, no notes, or no transcript still opens and explains what is missing, instead of disappearing from the record.
@@ -28,7 +28,7 @@ Badges at the top tell you the state of things at a glance: whether the candidat
 Use **Download transcript** to take it with you. Two formats are available:
 
 - **PDF**, formatted for sharing with a hiring manager or attaching to a decision.
-- **TXT**, plain text for search, diffing, or pasting elsewhere.
+- **Plain text**, raw text for search, diffing, or pasting elsewhere.
 
 ## Who can see what
 

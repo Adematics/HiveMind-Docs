@@ -10,13 +10,23 @@ The **Calendar** page is where interview scheduling comes together: your Google 
 Open **Calendar** from the sidebar and switch to the **Connections** tab. You'll see two sections under **Connected Accounts**:
 
 - **Calendar sync**: click **Connect Google Calendar** to sync your availability and surface your events on the in-app calendar. Once connected, the **Sync** button in the header pulls in your latest events.
-- **Meeting platforms**: click **Connect Google Meet** or **Connect Zoom** so interviews you own get a meeting link on your account. Microsoft Teams is marked **Coming soon**.
+- **Meeting platforms**: click **Connect Google Meet** or **Connect Zoom** so interviews you own get a meeting link on your account. The **Microsoft Teams** card here still reads **Coming soon**: Teams meetings are connected from Settings instead (see below).
 
 {/* 📸 Screenshot: The Connections tab showing the Calendar sync and Meeting platforms cards */}
 
 <Callout icon="💡" theme="info">
-  Google Calendar and Google Meet are separate connections: linking your calendar doesn't automatically enable Meet. You can use the same Google account for both, and Zoom works on its own with no calendar required. Each interviewer hosts meetings on their own connected account, so every teammate who runs interviews should connect a platform here.
+  Google Calendar and Google Meet are separate connections: linking your calendar doesn't automatically enable Meet. You can use the same Google account for both, and Zoom works on its own with no calendar required. Each interviewer hosts meetings on their own connected account, so every teammate who runs interviews should connect a platform here (or, for Teams, in Settings).
 </Callout>
+
+### Host interviews on Microsoft Teams
+
+Teams works the same way as Google Meet and Zoom: once it's connected, every interview you host gets a Teams link, created and sent automatically when the interview is scheduled.
+
+1. Open **Settings → Apps & Integrations** and choose **Microsoft**.
+2. Under **Teams meetings**, click **Connect Teams meetings** and sign in with your Microsoft account.
+3. Back in the pipeline, set the interview step's **Meeting platform** to **Microsoft Teams**.
+
+If your Microsoft organization requires an admin to approve new apps, you'll see **Admin approval required**. Click **I'm an admin, approve now** if you are one, or **Copy approval link for your IT admin** and send it to them, then start the connection again once it's approved.
 
 ## 2. Set your availability
 
@@ -48,14 +58,22 @@ Interview bookings (the events tied to a candidate) can simply be dragged to a n
 
 ## 5. How candidates book
 
-Interview stages in your pipelines offer two **Booking Mode** options:
+The **Video Interview** step in your pipelines offers two **Booking mode** options:
 
 - **Candidate Book**: the candidate sees your team's open slots on a **Book Your Interview** page, picks a time, and clicks **Confirm Booking**. They get an **Interview Booked!** confirmation and the meeting link by email, and they can reschedule themselves later.
-
-The booking page has a **Timezone** picker, set to the candidate's own timezone when the page loads. Every slot on the page is shown in whichever timezone is selected, so a candidate in another country reads times in theirs and never has to convert your working hours by hand. Changing the picker re-labels the slots; it does not change which slots are on offer, because those still come from your availability.
 - **Company Book**: the candidate submits their availability, and you pick the time from the pipeline's **Scheduler** tab using the **Schedule** button next to each candidate.
 
-See [Pipeline Nodes Reference](/docs/pipeline-nodes-reference) for configuring interview stages.
+The booking page has a **Timezone** picker, set to the candidate's own timezone when the page loads. Every slot on the page is shown in whichever timezone is selected, so a candidate in another country reads times in theirs and never has to convert your working hours by hand. Changing the picker re-labels the slots; it does not change which slots are on offer, because those still come from your availability.
+
+The step's **Meeting** section also sets:
+
+- **Meeting platform**: **Google Meet**, **Zoom**, or **Microsoft Teams**. Each interviewer hosts on their own connected account, so only teammates who have connected that platform can be picked as interviewers.
+- **Meeting duration (minutes)**: how long each interview runs.
+- **Booking window (days)**: how far ahead candidates can self-book. Slots are limited to the next N days; leave it blank for the 30-day default.
+
+{/* 📸 Screenshot: The Video Interview step's Meeting section with the platform, duration, and booking window fields */}
+
+See [Pipeline Nodes Reference](/docs/pipeline-nodes-reference) for configuring interview steps.
 
 ## What's next
 

@@ -38,12 +38,35 @@ When the presets don't fit (say you want a reviewer who can score assessments bu
 1. In the **Roles** tab, click **New Role**.
 2. Give it a **Name** (e.g. *Pipeline Reviewer*) and an optional **Description**.
 3. Optionally use **Clone from** to start with a system role's permissions instead of a blank slate. (Owner can't be cloned; it's reserved.)
-4. Tick permissions in the **Permissions** list. They're grouped by area (pipelines, candidates, billing, and so on), and each group has a select-everything option if you want to grant a whole area at once.
+4. Tick permissions in the **Permissions** list. Each group has a select-everything option if you want to grant a whole area at once. A role needs at least one permission.
 5. Click **Create role**.
 
 Custom roles appear alongside system roles everywhere a role can be assigned. Edit or delete them anytime from the **Roles** tab.
 
 {/* 📸 Screenshot: the role builder panel showing Name, Description, Clone from, and the grouped Permissions checklist */}
+
+### Permission areas
+
+Permissions are grouped into these areas, each with its own set of actions (typically list, view, create, update, and delete):
+
+| Area | What it covers |
+| --- | --- |
+| **Pipelines** | Seeing and opening pipelines, creating, editing, activating, and deleting them, and operator actions like starting interview calls or moving a candidate back or forward. **View all** lets someone see every pipeline instead of only the ones assigned to them. |
+| **Candidates** | Seeing candidates and their profiles, adding them, editing notes, tags, stage, and score, and deleting them. |
+| **Manual Reviews** | Seeing review tasks in the Inbox, and approving or rejecting candidates at manual review and manual interview stages. |
+| **Outreach** | Seeing, building, editing, launching, and deleting outreach campaigns. |
+| **Email** | Using the email inbox, reading threads, and sending or replying to candidates. |
+| **Contacts** | Seeing, adding, editing, and removing outreach contacts. |
+| **Assessments** | Seeing, building, editing, and deleting assessments. |
+| **Team Members** | Seeing the team list, inviting teammates, changing their role or pipelines, and removing them. |
+| **Roles** | Seeing the role catalog and creating, editing, or deleting custom roles. |
+| **Company Settings** | Viewing and editing workspace settings, such as the company name, slug, branding, and career page. |
+| **Billing** | Seeing the credit balance and subscription, and buying credits. |
+| **Integrations** | Connecting your own personal integrations (like your Google or Zoom account), and separately, managing company-wide ones (like Ashby, Slack, or shared mailboxes). |
+| **Data Import / Export** | Viewing dashboards and reports, importing data, and exporting candidate, contact, and pipeline data. |
+| **Audit Log** | Seeing the company-wide log of permission-relevant actions. |
+
+Hover over a permission in the role builder to see exactly what it allows.
 
 <Callout icon="⚠️" theme="warn">
   A role can only be deleted while no one is assigned to it. If members still hold the role, you'll get a "Role is in use" message. Move them to another role first, then delete.
@@ -52,6 +75,8 @@ Custom roles appear alongside system roles everywhere a role can be assigned. Ed
 ## 5. What roles control
 
 Permissions shape the whole app, not just Settings: tabs like **Workspace Settings**, **Roles**, and **Credits** only appear for roles allowed to manage them, and pages a role can't access simply don't show. If a teammate says something is "missing," check their role first. See [Settings Overview](/docs/settings-overview).
+
+Roles also apply to AI. Hive in the app and any AI assistant a teammate connects to Hivemind (see [Hivemind MCP Server](/docs/hivemind-mcp-server)) only offer the actions that person's role allows, using the same rules as the app. Ask for something outside your role and the assistant says it isn't available to you. Changing someone's role, or removing them, reaches their connected assistant within a minute.
 
 ## What's next
 

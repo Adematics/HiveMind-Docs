@@ -14,14 +14,16 @@ Open **Candidates** from the sidebar to see everyone across all your pipelines. 
 - **Filter** and **Sort**: build precise filters on any column and order the results; **Clear all** resets everything.
 - **View**: show or hide columns such as **Skills**, **Referral Tag**, or **Hired**.
 
-The table shows columns like **Name**, **Email**, **Phone**, **Score**, **Status**, **Current Node**, and **Pipeline**. Click **View Resume** in the **Resume** column to open a candidate's resume right in the app, or click the **Pipeline** value to jump to that pipeline's applicants table.
+The table shows columns like **Name**, **Email**, **Phone Number**, **Score**, **Status**, **Current Node**, **Pipeline**, and **Outcome** (**Passed**, **Rejected**, **Withdrawn**, or **Hired**). A badge beside a name such as **Manual** or **Copied** shows the candidate was added by your team or copied from another pipeline rather than applying. Click **View Resume** in the **Resume** column to open a candidate's resume right in the app, or click the **Pipeline** value to jump to that pipeline's applicants table.
 
 {/* 📸 Screenshot: The Candidates list with quick-filter chips, search box, and the Filter / Sort / View / Export controls visible */}
 
 Need the data elsewhere? Click **Export** to download the current view (rows, columns, and filters included) as a CSV.
 
+Click **Add candidate** in the page header to put someone into a pipeline yourself, at whichever stage you choose. See [Managing Candidates in a Pipeline](/docs/managing-candidates-in-a-pipeline#add-a-candidate-at-any-stage).
+
 <Callout icon="💡" theme="info">
-  Select one or more rows to act in bulk: **Send Email** sends a message to everyone selected, and **Delete** removes them. Deleting is permanent: it erases all responses, notifications, and history.
+  Select a row (or right-click it) for **Send Email**, **Add to list**, **Copy to another pipeline**, and **Delete**. Select several rows to **Send Email**, **Add to list**, or **Delete** in bulk. Deleting is permanent: it erases all responses, notifications, and history. Lists are covered in [Candidate Lists](/docs/candidate-lists).
 </Callout>
 
 ## Quick view and full profile
@@ -52,15 +54,23 @@ Scores run 0–100 and are color-coded: green for 80 and up, amber for 50–79, 
 
 ## Managing a candidate
 
-The **Manage** menu (gear icon) is where actions live:
+Actions are split between the candidate as a whole and each of their applications.
+
+The **Manage** menu in the profile header acts on the candidate:
 
 - **Send email**: compose directly from the profile.
+- **Add to list**: add them to one of your [Candidate Lists](/docs/candidate-lists), or create a new list on the spot.
+- **Delete from all pipelines**: erases the candidate everywhere.
+
+Each application card on the **Pipelines** tab has its own **Manage** menu, headed with that pipeline's name, for actions on that one application:
+
 - **Share report link** and **Share portal link**: copy links to the recruiter report or the candidate's own portal.
 - **Edit score**: override the overall score (0–100).
 - **Change stage**: opens **Manage Progress**, where you can **Rewind** a candidate to an earlier step or **Skip Ahead**.
 - **Mark as hired** / **Reset hiring status**.
 - **Remove from pipeline**: deletes that one application; other pipelines are untouched.
-- **Delete from all pipelines**: erases the candidate everywhere.
+
+To put the same person into another role, use **Copy to another pipeline** from their row in a candidates table.
 
 <Callout icon="⚠️" theme="warn">
   **Rewind** permanently deletes the responses from every step after the one you rewind to; the candidate will redo those assessments. Removals and deletions can't be undone either, so double-check before confirming.
@@ -71,4 +81,5 @@ The **Manage** menu (gear icon) is where actions live:
 - Work candidates stage-by-stage in [Managing Candidates in a Pipeline](/docs/managing-candidates-in-a-pipeline)
 - Dig into assessment reports in [Reviewing Results](/docs/reviewing-results)
 - See how people arrive in [Adding & Sourcing Candidates](/docs/adding-sourcing-candidates)
+- Group candidates you're tracking in [Candidate Lists](/docs/candidate-lists)
 - Send an offer with [Offers](/docs/offers)

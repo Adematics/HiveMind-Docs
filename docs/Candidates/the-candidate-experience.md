@@ -3,25 +3,32 @@ title: The Candidate Experience
 hidden: false
 ---
 
-Knowing exactly what your applicants see helps you design pipelines that feel polished and fair. This guide walks the journey from the candidate's side: the application form, their personal portal, assessments and interviews, and the emails Hivemind sends along the way.
+Knowing exactly what your applicants see helps you design pipelines that feel polished and fair. This guide walks the journey from the candidate's side: the job page and application form, their personal portal, assessments and interviews, and the emails Hivemind sends along the way.
 
 ## The application form
 
-Your pipeline's public link opens a company-branded page, with your logo up top, headed **"{Job Title} Application"**, and the form you configured: name, email, and any fields you added, such as phone, LinkedIn, location, or screening questions. Required fields are marked with an asterisk.
+Candidates usually find a role in one of two places:
 
-Resume upload is drag-and-drop or click-to-browse, and accepts **PDF files only, max 10MB**. Candidates finish with **Submit Application** and see a confirmation: "We've received your application and will review it shortly."
+- **Your company page.** Each active role has its own job page with the description (**About this role**), the steps they'll go through (**What to expect**), and an **Apply now** button. Candidates who aren't ready yet can choose **Remind me later**. See [Your Company Page](/docs/your-company-page).
+- **The application link** you shared directly, which goes straight to the form.
 
-{/* 📸 Screenshot: A public application page showing the company logo, form fields, and the resume upload zone */}
+Either way, the application page is form-first: your logo and company name, the job title, a short line of job facts (location, workplace, employment type, and when it was posted), and then the form itself, so applying starts on the first screen. A **View job details** link goes back to the full job page, and **See all open roles** at the bottom lists your other openings.
+
+The form contains the fields you configured: name, email, and any fields you added, such as phone, LinkedIn, location, or screening questions. Required fields are marked with an asterisk.
+
+Resume upload is drag-and-drop or click-to-browse, and accepts **PDF files only, max 10MB**. Candidates finish with **Submit application** and see a confirmation: "We've received your application and will review it shortly."
+
+{/* 📸 Screenshot: A public application page showing the company logo, job title and facts, the View job details link, form fields, and the resume upload zone */}
 
 <Callout icon="💡" theme="info">
-  If you open your own application link while signed in, you'll see a **Preview Mode** badge; submissions are blocked so you can safely test the form before sharing it.
+  If you open your own application link while signed in, you'll see a **Preview mode** badge; submissions are blocked so you can safely test the form before sharing it.
 </Callout>
 
 ## The candidate portal
 
 After applying, candidates land on their personal portal (you can also copy it anytime via **Share portal link** on their profile). It has two tabs:
 
-- **Overview**: a "Welcome" banner with the role and company, a progress bar, a step-by-step checklist of their journey, and an action button for whatever's next: **Continue**, **Schedule Interview**, or **Set Availability**. Between steps they see friendly status screens like "Your resume is being reviewed."
+- **Overview**: a "Welcome" banner with the role and company, a progress bar, a step-by-step checklist of their journey, and an action button for whatever's next: **Continue**, **Schedule Interview**, or **Set Availability**. Between steps they see friendly status screens like "Your resume is being reviewed" or "Your interview is being reviewed." When there's nothing left for them to do, the portal says so plainly: "No more steps for you", with a note that your team will be in touch by email. A candidate still waiting on a final review keeps seeing that review's message rather than being told they're done.
 - **Messages**: a two-way chat with your team, the same thread you see in Hivemind.
 
 Whether the portal shows pipeline steps and assessment scores is controlled by your company preferences.
@@ -30,7 +37,7 @@ Whether the portal shows pipeline steps and assessment scores is controlled by y
 
 An assessment opens with an overview: question count, estimated minutes, a **Question Breakdown** by type, and a **Before You Start** checklist noting that progress auto-saves and they can navigate freely. They click **Start Assessment** to begin.
 
-While answering, a sidebar tracks progress and lets them mark questions for review, and timed questions show a **Time Remaining** countdown that auto-submits when it expires. Video questions keep the prompt hidden until the candidate presses Record: one spontaneous take, no retries. When done, they confirm via **Submit Assessment**; unanswered questions can't be submitted later.
+While answering, a progress panel shows how many questions are **Answered**, **Pending**, or **Marked for review**, and candidates can click any question in it to jump straight there. The panel locks while a video answer is recording, so no one loses a take by clicking away. Questions appear in the order you set in the assessment builder, and timed coding questions show a **Time left** countdown, with a prompt to submit when time runs out. Video questions keep the prompt hidden until the candidate presses Record: one spontaneous take, no retries. When done, they confirm via **Submit Assessment**; unanswered questions can't be submitted later.
 
 {/* 📸 Screenshot: The candidate assessment view with the question sidebar, timer, and a question open */}
 

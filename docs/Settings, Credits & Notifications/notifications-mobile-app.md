@@ -3,7 +3,7 @@ title: Notifications & Mobile App
 hidden: false
 ---
 
-Hivemind keeps you posted through three channels: the **Inbox** inside the app, email summaries, and push notifications on the Hivemind mobile app. They all draw from the same stream of tasks (things that need your attention, like a candidate waiting on manual review or a reply landing in a conversation), so wherever you see the alert, acting on it clears it everywhere.
+Hivemind keeps you posted through three channels: the **Inbox** inside the app, email summaries, and push notifications on the Hivemind mobile app. Your team can also get pipeline updates in Slack, ClickUp, or Microsoft Teams. They all draw from the same stream of tasks (things that need your attention, like a candidate waiting on manual review or a reply landing in a conversation), so wherever you see the alert, acting on it clears it everywhere.
 
 ## Your Inbox: notifications as tasks
 
@@ -43,6 +43,16 @@ Two kinds of email keep you covered when you're not in the app:
 <Callout icon="⚠️" theme="warn">
   The summary email goes out as long as your workspace has open tasks. If you'd rather not hear about the same items twice a week, work through your Inbox and resolve them; an empty Inbox means no summary.
 </Callout>
+
+## Team chat channels
+
+If your team lives in a chat tool, connect it once for the whole company in **Settings → Apps & Integrations** and pipeline updates arrive there too:
+
+- **Slack**: every active pipeline gets its own private channel with a grouped digest of activity, and each teammate gets direct messages for the tasks assigned to them.
+- **ClickUp**: each live pipeline gets a ClickUp Chat channel that carries only the moments that need a person, such as a manual review or an interview to book, and each message updates itself once the task is resolved.
+- **Microsoft Teams**: the **Teams channel notifications** option on the **Microsoft** card posts pipeline activity and team tasks to one channel for the whole company.
+
+These are company-wide connections, so they need a role that can manage company integrations. See the [Integrations Overview](/docs/integrations-overview).
 
 ## The Hivemind mobile app
 

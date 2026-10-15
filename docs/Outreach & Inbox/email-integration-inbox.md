@@ -3,7 +3,7 @@ title: Email Integration & Inbox
 hidden: false
 ---
 
-Connecting a mailbox lets Hivemind send and receive email on your behalf: automated pipeline messages, outreach sequences, and your own replies all go out through your real address, and candidate responses flow back into your **Inbox** automatically. This guide covers connecting Gmail or a custom mail server, and working with conversations once mail starts arriving.
+Connecting a mailbox lets Hivemind send and receive email on your behalf: automated pipeline messages, outreach sequences, and your own replies all go out through your real address, and candidate responses flow back into your **Inbox** automatically. This guide covers connecting Gmail, Microsoft 365 Outlook, or a custom mail server, and working with conversations once mail starts arriving.
 
 <Callout icon="⚠️" theme="warn">
   Without a connected mailbox, automated candidate emails, outreach email steps, and inbound reply tracking won't run. Connect one before your pipelines or campaigns go live.
@@ -16,19 +16,28 @@ Connecting a mailbox lets Hivemind send and receive email on your behalf: automa
 3. Choose who the account is for: **Personal** (only you can see and use it) or **Company** (shared with your whole team).
 4. Pick a provider:
    - **Google**: for Gmail and Google Workspace. You're redirected to Google to sign in and approve access; one approval covers both sending and reading replies, so reply and bounce tracking work immediately.
+   - **Microsoft**: for Outlook and Microsoft 365. You're redirected to Microsoft to sign in and approve access; one approval covers both sending and syncing replies.
    - **SMTP**: for any other provider. In the **Connect Email Account** dialog, enter your **Email Address** and **Password**, your **SMTP Server**, and a **Username**, and choose whether to **Use TLS Encryption**. Turn on **Inbox Sync (IMAP)** and fill in the **IMAP Server** and **Port** (usually 993) so replies sync automatically. Hivemind verifies the connection step by step and confirms with **Account connected successfully**.
 
-{/* 📸 Screenshot: the Add Email Account dialog showing the Google and SMTP options */}
+<Callout icon="💡" theme="info">
+  Many Microsoft 365 organizations don't let individual users approve mail access for outside apps. If yours is one of them, Hivemind shows an **Admin approval required** dialog instead of an error. If you're a Microsoft admin, click **I'm an admin, approve now**; otherwise click **Copy approval link for your IT admin** and send it to them. Once it's approved, start the connection again.
+</Callout>
+
+You can also connect Gmail and Outlook mailboxes from the **Google** and **Microsoft** cards in **Settings → Apps & Integrations**.
+
+{/* 📸 Screenshot: the Add Email Account dialog showing the Google, Microsoft, and SMTP options */}
 
 ## 2. Manage your accounts
 
-Each connected account appears as a card with status pills: Google accounts show **Connected**, while SMTP accounts show **SMTP Verified** (sending works) and **IMAP Enabled** (replies sync). You can connect multiple accounts and flip **Set as default** on the one Hivemind should use for automated emails. Use the card menu to **Edit Settings** or **Remove** an account, and **Test Email Accounts** at the top of the page to run a **Verify Connection** check anytime.
+Each connected account appears as a card with status pills: Google and Microsoft accounts show **Connected**, while SMTP accounts show **SMTP Verified** (sending works) and **IMAP Enabled** (replies sync). You can connect multiple accounts and flip **Set as default** on the one Hivemind should use for automated emails. Use the card menu to **Edit Settings** or **Remove** an account, and **Test Email Accounts** at the top of the page to run a **Verify Connection** check anytime.
+
+Removing an Outlook mailbox stops sending and reply sync in Hivemind. Microsoft doesn't let Hivemind withdraw the access grant itself, so if you want it fully revoked, also remove Hivemind from your Microsoft account at myapps.microsoft.com. If the same Microsoft account also powers Teams meetings, those stay connected.
 
 {/* 📸 Screenshot: the Email Accounts page with a connected account card and its status pills */}
 
 ## 3. Sending and receiving
 
-Outgoing mail (pipeline automations, [outreach campaign](/docs/outreach-campaigns) steps, and replies you write) is sent through your connected account, so candidates see your address, not a generic one. Inbound works automatically: Gmail accounts sync replies in real time, and IMAP accounts are checked on a regular schedule. Hivemind matches each reply to the conversation it belongs to and files it in your Inbox.
+Outgoing mail (pipeline automations, [outreach campaign](/docs/outreach-campaigns) steps, and replies you write) is sent through your connected account, so candidates see your address, not a generic one. Inbound works automatically: Gmail and Outlook accounts sync replies as they arrive, and IMAP accounts are checked on a regular schedule. Hivemind matches each reply to the conversation it belongs to and files it in your Inbox.
 
 ## 4. Working in the Inbox
 

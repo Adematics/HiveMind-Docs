@@ -3,7 +3,7 @@ title: Creating & Editing Assessments
 hidden: false
 ---
 
-Build an assessment in minutes with the guided helper, or hand-pick every question yourself. This guide covers the builder, the question bank, per-question analytics, and the assessments Hive composes for you automatically.
+Build an assessment in minutes with the guided helper, or hand-pick every question yourself. This guide covers the builder, putting questions in order, the question bank, per-question analytics, and the assessments Hive composes for you automatically.
 
 ## 1. Create with the helper
 
@@ -23,10 +23,30 @@ The **Add Questions** button opens **Add Questions to Assessment**, a filterable
 
 ## 3. Edit an existing assessment
 
-Open any assessment via **Edit Assessment**. You can rename it inline, add or remove questions, regenerate or edit the **Description**, copy the shareable link, **Preview** it exactly as candidates will see it, and jump to **View Applicants**. Difficulty and time limit recalculate automatically from the question set.
+Open any assessment via **Edit Assessment**. The editor shows the questions on the left and an **Overview** panel on the right that adds up the question count, duration, **Difficulty**, **Format** (question types) and **Skills**. From the header you can copy the assessment link, **Preview** it exactly as candidates will see it, and jump to **Applicants**.
+
+- **Questions**: click **Add Questions** to pull more from the bank, or open a question's **⋯** (more actions) menu and choose **Remove**. Use the eye icon to preview a single question.
+- **Title and Description**: click the title to rename the assessment, and edit the **Description** (what candidates read before they start). **Generate** rewrites it from the current questions, so regenerate after changing the set.
+
+Question changes (adding, removing, reordering) save as you make them. The title and description save when you click **Save**; until then the header shows **Unsaved**. Difficulty and time limit recalculate automatically from the question set.
+
+{/* 📸 Screenshot: The assessment editor with the question list, the Overview panel, and the header actions */}
+
+### Put questions in order
+
+Candidates answer the questions in the order shown in the editor, so you can open gently and build up:
+
+1. Grab the handle on the left of a question and drag it to a new position, or
+2. Open the question's **⋯** menu and choose **Move to top**, **Move up**, **Move down**, or **Move to bottom**. This works without a mouse, too.
+
+The new order saves straight away. If it can't be saved, you'll see **Couldn't save the new order** and the question moves back to where it was. Candidates still get the freedom to jump around: the progress panel lets them open any question in any order. See [Assessment Types](/docs/assessment-types).
+
+<Callout icon="💡" theme="info">
+  An assessment nobody has arranged yet is ordered by question type: multiple choice first, then open ended, video, coding, real-time coding, and real-time open ended. Drag anything to override that.
+</Callout>
 
 <Callout icon="⚠️" theme="warn">
-  Edits apply immediately, even if candidates have already taken the assessment, which makes earlier and later scores harder to compare. If a live assessment needs big changes, **Duplicate** it and attach the new version to your pipeline instead.
+  Edits apply to everyone who takes the assessment from then on, even if candidates have already taken it, which makes earlier and later scores harder to compare. If a live assessment needs big changes, **Duplicate** it and attach the new version to your pipeline instead.
 </Callout>
 
 ## 4. Manage the question bank

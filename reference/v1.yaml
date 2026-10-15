@@ -5,7 +5,7 @@ info:
   description: |
     Programmatic access to Hivemind candidates. Server-to-server REST. All
     endpoints authenticate via a per-company API key minted in
-    Settings → Integrations → API Key.
+    Settings → Apps & Integrations → Hivemind API key.
 
     ### Conventions
     - **Auth**: `Authorization: Bearer hk_live_<secret>`
@@ -32,12 +32,13 @@ info:
       We deliberately do **not** set CORS headers — browsers will refuse
       to call it directly, which is intentional. Bearer keys must never
       live in client-side code; proxy through your own backend instead.
-    - **Webhooks**: configure an endpoint in Settings → Integrations →
-      Webhook and tick the candidate events you want
+    - **Webhooks**: configure an endpoint in Settings → Apps & Integrations →
+      Outbound webhook and tick the candidate events you want
       (`candidate.applied`, `candidate.stage_changed`, `candidate.end`,
       `candidate.manual_intervention` — subscribe explicitly, no wildcards).
-      Verify each delivery by string-comparing `X-Hivemind-Signature`
-      to your stored secret with a constant-time compare; dedupe on
+      Verify each delivery by recomputing the HMAC-SHA256 of the raw body
+      with your stored secret and constant-time comparing it to
+      `X-Hivemind-Signature` (`sha256=<hex>`); dedupe on
       `X-Hivemind-Event-Id`. See the `webhooks` section below for
       payload shapes and retry behavior.
   contact:
@@ -113,27 +114,15 @@ tags:
       exactly once on creation (and again on rotation). If you lose it,
       rotate to issue a new one — there is no recovery endpoint.
 
-      **Verification.** The `X-Hivemind-Signature` header carries the
-      shared secret itself, NOT a cryptographic signature. Compare it
-      against your stored copy with a constant-time string compare
-      (e.g. `crypto.timingSafeEqual` in Node, `hmac.compare_digest` in
-      Python). There is no HMAC, no timestamp binding, and no
-      canonical-payload step.
-
-      **What this model gives you.** Authentication: only Hivemind
-      knows your secret, so anyone presenting the right header is us.
-      Transport confidentiality: TLS. Per-event dedupe: every retry of
-      the same event carries the same `X-Hivemind-Event-Id`.
-
-      **What this model does NOT give you.** No replay protection: a
-      receiver that ever logs the header (or an intermediary that
-      caches it) learns your secret permanently. No body binding: an
-      attacker who replays a delivery can swap the body and keep the
-      header valid. Mitigations on our side: short delivery TTL
-      (5 attempts over ~22 minutes), HTTPS-only delivery, rotation
-      invalidates the previous secret immediately with no grace
-      window. Rotate immediately if your receiver is compromised or if
-      you observe the secret in logs.
+      **Verification.** The `X-Hivemind-Signature` header is
+      `sha256=<hex>`: an HMAC-SHA256 of the raw request body, keyed by
+      your signing secret. Recompute it over the exact bytes you
+      received (before any JSON parsing) and compare with a
+      constant-time compare (e.g. `crypto.timingSafeEqual` in Node,
+      `hmac.compare_digest` in Python). The secret itself never travels
+      on the wire. Dedupe on `X-Hivemind-Event-Id`: every retry of the
+      same event carries the same value. Rotating the secret invalidates
+      the previous one immediately, with no grace window.
 
       **Retry ladder.** 5 attempts spaced at 0s / 30s / 2m / 5m / 15m
       (~22 min total budget). Per-attempt timeout is 10 seconds. After 24
@@ -1520,7 +1509,7 @@ components:
       bearerFormat: hk_live_<secret>
       description: |
         Per-company API key. Mint via the Hivemind UI under Settings →
-        Integrations → API Key. Format `hk_live_<base62 secret>` — the
+        Apps & Integrations → Hivemind API key. Format `hk_live_<base62 secret>` — the
         key carries no tenant identity, so possession of the key is the
         only auth claim. Pass as `Authorization: Bearer <key>`.
 
@@ -1667,6 +1656,15 @@ components:
             re-fetch the candidate for a fresh URL. `null` if no resume.
         application_metadata:
           $ref: '#/components/schemas/ApplicationMetadata'
+        entry_source:
+          type: string
+          description: |
+            How the candidate entered the pipeline: `application` (the
+            public application form), `manual` (added by a teammate),
+            `copied` (copied from another pipeline), `webhook` (a
+            pipeline's inbound webhook), `api` (this API), or an ATS
+            provider such as `ashby` or `greenhouse`. Treat unknown values
+            as opaque; new sources may be added.
       example:
         id: 9f1c8e42-4b7d-4ae6-8b3a-2a4f0d7c5e10
         email: alice@example.com

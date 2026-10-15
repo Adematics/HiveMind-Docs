@@ -3,7 +3,7 @@ title: Assessment Types
 hidden: false
 ---
 
-Hivemind offers six question types you can mix inside any assessment, plus two standalone tests, the cognitive (IQ) test and the personality test, that run as their own pipeline stages. Here's what each one measures, what candidates experience, and when to reach for which.
+Hivemind offers six question types you can mix inside any assessment, plus two standalone tests, the cognitive (IQ) test and the personality test, that run as their own pipeline steps. Here's what each one measures, what candidates experience, and when to reach for which.
 
 ## Question types in the assessment builder
 
@@ -24,20 +24,30 @@ When you build an assessment, the **Question Types** step lets you combine any o
 ![The Question Types selection cards in the assessment builder](https://rocketdevs-assets.s3.amazonaws.com/lark-files/%20asssesment%20type.png)
 
 <Callout icon="💡" theme="info">
-  Candidates always see an overview screen first (question count, total minutes, and a **Question Breakdown** by type) before clicking **Start Assessment**. Progress saves automatically, and they can move between questions freely. More in [The Candidate Experience](/docs/the-candidate-experience).
+  Candidates always see an overview screen first (question count, total minutes, and a **Question Breakdown** by type) before clicking **Start Assessment**. Questions appear in the order you set in the editor, and progress saves automatically. More in [The Candidate Experience](/docs/the-candidate-experience).
 </Callout>
+
+### Moving between questions
+
+While they work, candidates have a **Progress** panel listing every question with its type and an answered count (for example, **3/7**). They can click any question to jump straight to it, in any order. A legend shows which questions are **Answered**, which are **Pending**, and which they flagged with **Mark for Review** to come back to.
+
+The panel locks while a video answer is recording or uploading, so nobody loses a take by clicking away mid-recording. On smaller screens the panel starts collapsed; candidates open it when they want the full list.
+
+{/* 📸 Screenshot: The candidate's Progress panel with answered, pending, and marked-for-review questions */}
 
 ## Cognitive Assessment (IQ Test)
 
-Added to a pipeline as its own stage, the **Cognitive Assessment** is based on published neuroscience research and runs six short subtests in a fixed order: **Verbal Reasoning**, **Mental Rotation**, **Visual Memory**, **Anagrams**, **Spatial Centroid**, and **Exposure Memory**. Only the two memory subtests are timed per trial, and progress is saved so candidates can resume if interrupted.
+Added to a pipeline as the **IQ Test** step, the cognitive assessment is based on published neuroscience research and runs six short subtests in a fixed order: **Verbal Reasoning**, **Mental Rotation**, **Visual Memory**, **Anagrams**, **Spatial Centroid**, and **Exposure Memory**. Only the two memory subtests are timed per trial, and progress is saved so candidates can resume if interrupted.
 
 You get an overall IQ-style score (average = 100) with three component scores (**Reasoning**, **Memory**, and **Verbal**), each with a percentile. Use it for roles where raw problem-solving matters more than a specific skill stack.
 
 ## Personality Test (Work Style Assessment)
 
-Candidates see this as a **Work Style Assessment**: a 15–20 minute interactive conversation with the AI interviewer covering **Work Environment Preferences**, **Learning & Problem-Solving**, **Decision Making Style**, and **Work Style Flexibility**. There are no right or wrong answers, and candidates never see a score or a type.
+Added to a pipeline as the **Personality Test** step with its default **Work Style Interview** variant, this is what candidates see as a **Work Style Assessment**: a 15–20 minute interactive conversation with the AI interviewer covering **Work Environment Preferences**, **Learning & Problem-Solving**, **Decision Making Style**, and **Work Style Flexibility**. There are no right or wrong answers, and candidates never see a score or a type.
 
 On your side, the report maps the conversation to a personality profile with role-fit ratings (**strong fit** / **fit** / **not fit**), strengths, potential challenges, and evidence from the candidate's own answers. Details in [Reviewing Results](/docs/reviewing-results).
+
+The same step can run a **DISC Profile** instead: a structured 28-block questionnaire that takes 6–8 minutes, needs no microphone, and is scored by fixed rules rather than AI. See [DISC Personality Profiles](/docs/disc-personality-profiles).
 
 <Callout icon="⚠️" theme="warn">
   Use the personality and cognitive tests as one signal among several: pair them with a skills assessment and an interview rather than screening on them alone.

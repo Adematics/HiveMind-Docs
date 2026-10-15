@@ -7,17 +7,21 @@ The Hivemind public REST API lets your own systems read and write the same data 
 
 ## 1. Generate your API key
 
-1. Open **Settings → Apps & Integrations**.
-2. In the **Hivemind API Key** card, click **Generate** (or **Regenerate** if a key already exists).
+1. Open **Settings → Apps & Integrations** and click the **Hivemind API key** tile (under **Developer**).
+2. Under **Secret key**, click **Generate key** (or **Regenerate** if a key already exists).
 3. Copy the key immediately using the copy button.
 
 Keys start with the prefix `hk_live_`. There is **one key per workspace**, and it authenticates as your company, not as an individual user.
+
+<Callout icon="💡" theme="info">
+  The API key is for the REST API only. AI assistants connect to Hivemind by signing in, not with this key. See [Hivemind MCP Server](/docs/hivemind-mcp-server).
+</Callout>
 
 <Callout icon="⚠️" theme="warn">
   The key is shown **once**. If you lose it, click **Regenerate**; this issues a new key and **immediately invalidates the old one**, so update every system that uses it.
 </Callout>
 
-{/* 📸 Screenshot: Hivemind API Key card in Settings → Apps & Integrations with a freshly generated key and copy button */}
+{/* 📸 Screenshot: the Hivemind API key panel in Settings → Apps & Integrations with a freshly generated key and copy button */}
 
 ## 2. Authenticate
 
@@ -60,6 +64,8 @@ Each workspace gets **120 requests per minute** and **10,000 requests per day**.
 
 Exceeding a limit returns `429 rate_limited` with a `Retry-After` header telling you how many seconds to wait.
 
+There is also a limit of **60 requests per minute per IP address**, checked before your key is, so a misconfigured client retrying with a bad key gets `429` rather than hammering the API.
+
 ## 5. Idempotency (safe retries)
 
 For `POST` and `PATCH` requests, you can send an `Idempotency-Key` header (8–64 characters of letters, digits, `_` or `-`; a UUID works well). If the same key and body are retried within **24 hours**, Hivemind replays the original response instead of repeating the action, and marks it with an `Idempotent-Replay: true` header.
@@ -76,7 +82,7 @@ For `POST` and `PATCH` requests, you can send an `Idempotency-Key` header (8–6
 
 The complete endpoint documentation lives in the [API Reference](/reference). Highlights:
 
-- **Candidates**: list and create candidates, fetch or update one, and `rewind` / `fast-forward` a candidate through pipeline stages.
+- **Candidates**: list and create candidates, fetch or update one, and `rewind` / `fast-forward` a candidate through pipeline stages. Every candidate carries an `entry_source` telling you how they got into the pipeline: `application`, `manual`, `copied`, `webhook`, `ashby`, `greenhouse` or `api`.
 - **Pipelines**: list pipelines, fetch one, and update it.
 - **Assessments and questions**: read-only endpoints for assessment performance, covered below.
 

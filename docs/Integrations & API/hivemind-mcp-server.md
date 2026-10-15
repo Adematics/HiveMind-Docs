@@ -3,180 +3,112 @@ title: Hivemind MCP Server
 hidden: false
 ---
 
-The Hivemind MCP server puts your hiring data inside the AI assistant your team already uses: Claude, ChatGPT, Microsoft Copilot, or any client that speaks the [Model Context Protocol](https://modelcontextprotocol.io). Ask "who's still in screening for the backend role?" in plain language and the answer comes back grounded in your live pipelines, candidates, and assessment results.
+The Hivemind MCP server puts your hiring data inside the AI assistant your team already uses: Claude, ChatGPT, or any app that supports the [Model Context Protocol](https://modelcontextprotocol.io). Ask "who's still in screening for the backend role?" or "rank everyone we have by years of Postgres" in plain language, and the answer comes back grounded in your live pipelines, candidates, and assessment results, with a link to every candidate it names.
 
-The server is live at `https://mcp.hivemind.hr` and exposes **38 tools**. Most of them read: pipelines, candidates, assessments, questions, and outreach campaigns. Some of them build, and those follow a two-step pattern, so nothing an assistant produces goes live on its own.
+The server lives at `https://mcp.hivemind.hr` and is listed in the official MCP Registry as `hr.hivemind/mcp`. It exposes **56 tools**. Most of them read; the ones that build or change things ask you first, and nothing an assistant drafts goes live on its own.
 
 <Callout icon="🔒" theme="info">
-  Everything the assistant sees is scoped to one company: whichever company the connection was authorized for. Connect with **Sign in with Hivemind** below and you can review and revoke that access at any time from Settings.
+  Every connection belongs to one person and one company. The assistant sees only the company you signed in to, and it can only do what your role in Hivemind allows.
 </Callout>
 
-## Building tools stage first, then commit
+## 1. Connect your assistant
 
-Tools that create a pipeline, an assessment or an outreach campaign write a **staged draft**, not a live object. A separate `commit_` tool promotes it. In between you can list it, edit it, screenshot it to see what it will look like, or delete it and start over.
+Hivemind connects by signing in. There is no API key to copy and nothing to paste.
 
-That means an assistant cannot activate a pipeline or send a campaign in one step. Ask for a pipeline and you get a draft to approve.
+1. In your assistant, add a **custom connector** (some apps call it an **MCP server** or **Integration**). Choose the option for a remote server, not a local command.
+2. Use `https://mcp.hivemind.hr` as the server URL, with no trailing slash.
+3. Your assistant sends you to Hivemind. Sign in if you aren't already, check the workspace shown is the right one, and choose **Allow**.
 
-## 1. Connect with one click
+The tools appear straight away. In **Claude** (claude.ai or Claude Desktop) this is **Settings → Connectors → Add custom connector**. In **Claude Code** it is one command, and Claude Code runs the sign-in for you:
 
-In Claude, add a **custom connector** pointing at `https://mcp.hivemind.hr`. Claude discovers the rest: you are sent to Hivemind, you sign in if you are not already, and a consent screen names the app asking for access. Approve it and the connection is live. There is no key to copy and nothing to paste.
+```bash
+claude mcp add --transport http hivemind https://mcp.hivemind.hr
+```
 
-The consent screen shows a **verified** badge for apps Hivemind can vouch for, which today means Claude. An app without that badge is showing you a name it chose for itself, so read it with suspicion before approving.
+Hivemind has the same steps in the app: open **Settings → Apps & Integrations**, click **Connected apps** and choose **How to connect**.
 
-{/* 📸 Screenshot: the Hivemind consent screen showing the verified Claude badge */}
+{/* 📸 Screenshot: the Hivemind consent screen showing the Verified badge and the Allow button */}
 
-### Review and revoke access
+The consent screen shows a **Verified** badge for apps Hivemind can vouch for: Claude, ChatGPT and ClickUp today. Any other app shows **Unverified**: it still connects, but the name is one the app chose for itself, so read it with suspicion before approving.
 
-Connected apps are listed under **Settings → Apps & Integrations**. Each one can be revoked there, which takes effect immediately and cannot be undone from the app's side. Revoking is the right move when a laptop goes missing or a teammate leaves.
-
-<Callout icon="💡" theme="info">
-  Connections are per user. Revoking yours does not disturb a colleague's, and a colleague's connection sees the same company data yours does, under their own permissions.
+<Callout icon="⚠️" theme="warn">
+  API keys no longer work with the MCP server. If you set up Hivemind earlier with an `hk_live_` key (for example through `mcp-remote` in Claude Desktop's config file), remove that entry and connect with the steps above. The API key is still the right way in for the [Public API](/docs/public-api-getting-started).
 </Callout>
 
-## 2. Or connect with an API key
+## 2. Review and revoke access
 
-An API key is still the right choice for a script, a server, or a client that does not speak OAuth. Sections 3 and 4 below use this route.
+Your connected apps are listed under **Settings → Apps & Integrations → Connected apps**, each with when it connected and whether it is verified. Click **Disconnect** to revoke one: it loses access and cannot reconnect unless you allow it again. If it is in the middle of something, that can take up to an hour to stop completely. Anything it already created stays where it is.
 
-In Hivemind, go to **Settings → Apps & Integrations** and generate or copy the API key. It looks like `hk_live_…`.
+Connections are per person. Disconnecting yours does not affect a colleague's.
 
-**One active key per company.** Regenerating revokes the previous key, which breaks every client already using it, so reuse the same key across your MCP clients rather than minting a second one.
+## 3. What it can do
 
-{/* 📸 Screenshot: Settings → Apps & Integrations showing the API key card */}
+The 56 tools fall into these groups:
 
-## 3. Connect from Claude Code (CLI) with a key
+| Group | Tools | What you can ask for |
+| --- | --- | --- |
+| **Candidates** | 8 | Search everyone in the company by resume content, skills, location, scores and stage; read full evidence for up to 10 candidates; compare 2 to 10 side by side; rank a pool; funnel counts for one pipeline or the whole company. |
+| **Candidate lists** | 6 | Find your saved lists, see who is on one, save a shortlist, take people off a list, rename a list, or delete one. |
+| **Pipelines** | 9 | List and read pipelines; draft a new pipeline, preview it, and save it; edit a draft. |
+| **Assessments** | 7 | List assessments; draft a new one from your question bank (or new questions you agree to), preview it, and save it. |
+| **Outreach campaigns** | 15 | Draft a campaign and its steps, add recipients from a pasted list, from candidates or from a saved list, check what still blocks launch, and link a campaign to a pipeline. |
+| **Message variables** | 5 | See which variables a campaign's leads carry, and manage your company-wide variables. |
+| **Reference and lookups** | 6 | Roles and skills, question bank search, the email senders and interviewers you can use, and reference material the assistant reads before building. |
 
-Claude Code speaks HTTP natively, so it's one command:
+Some things worth knowing:
 
-```bash
-claude mcp add hivemind --transport http https://mcp.hivemind.hr \
-  --header "Authorization: Bearer hk_live_YOUR_KEY_HERE"
-```
+- **Company-wide answers.** Counts work across every pipeline, so "how many applications came in last month?" doesn't need a pipeline name. Answers bounded by dates show today's date beside the window, so "last month" is never ambiguous.
+- **Ranking.** The assistant can rank one pipeline's candidates by the total score, the resume score, a step type such as the assessment, or one specific step, and tells you who has no score yet instead of quietly dropping them. It can also rank a pipeline, a saved list, or every candidate in the company by **months of experience with a skill** from their resume, narrowed by status, stage, hired, or application date. People who list the skill without a duration count as unknown, never as zero.
+- **Compare and shortlist.** Ask it to compare candidates and it lines them up on shared skills, scores and questions. Happy with the result? Ask it to save the shortlist and it lands under **Candidate Lists** in Hivemind for the rest of the team.
+- **Outreach from people you already have.** Add candidates or a saved list straight to a campaign instead of exporting a spreadsheet. People who opted out of your emails are never added, and the assistant tells you who was skipped for having no email.
+- **Honest limits.** Some requests are beyond what search can do today: matching on meaning rather than words, judging fit against a job description across your database, or searching interview transcripts. The assistant says so first, then offers the closest search it can run, labelled as an approximation.
+- **Links you can check.** Every candidate it names comes with a link to their profile in Hivemind. The link only opens for people signed in to your company.
 
-Verify it connected:
+Some apps also show ready-made starting points from Hivemind, such as **build_pipeline**, **create_assessment** and **review_candidates**.
 
-```bash
-claude mcp get hivemind     # URL, headers, connection status
-claude mcp list             # health-check every configured server
-```
+## 4. Safety: drafts, previews, and confirmations
 
-Expect `Status: ✔ Connected`.
+**Building stages first, then commits.** Asking for a pipeline, an assessment or an outreach campaign creates a **staged draft**, not a live object. The assistant gives you a preview link and a screenshot, lists the defaults it chose, and asks whether to save it. Edits keep the same draft and the same link. Only when you say to save does it commit, and pipelines are saved as drafts unless you ask otherwise.
 
-## 4. Connect from Claude Desktop with a key
+**Going live stays with you.** Activating a pipeline and launching a campaign are done by you in the Hivemind app, never by the assistant.
 
-Claude Desktop is configured through its JSON config file, and it accepts stdio servers only, so the connection is bridged with `mcp-remote` (requires Node.js on PATH).
+**It asks before anything final.** The assistant needs your explicit go-ahead, in the conversation, before it saves a draft, saves a shortlist, removes people from a list, deletes a list, removes campaign recipients, or overwrites a lead's variables. Deleting a list never deletes the candidates on it, and removing someone from a list removes them from nothing else.
 
-| OS | Config file |
-| --- | --- |
-| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Linux | `~/.config/Claude/claude_desktop_config.json` |
-
-Merge this entry under `mcpServers` (add it alongside any servers already there; don't replace the file):
-
-```json
-{
-  "mcpServers": {
-    "hivemind-mcp-remote": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.hivemind.hr",
-        "--header",
-        "Authorization: Bearer hk_live_YOUR_KEY_HERE"
-      ]
-    }
-  }
-}
-```
-
-Prefer not to edit JSON by hand? Run the command for your OS below; each one does the merge for you (it only touches the `hivemind-mcp-remote` entry and creates the file if it doesn't exist).
-
-**macOS / Linux** (needs `jq`: `brew install jq` on macOS, `sudo apt install jq` on Linux)
-
-First set the config path for your OS (run only the line that matches):
-
-```bash
-# macOS
-CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
-# Linux
-CONFIG="$HOME/.config/Claude/claude_desktop_config.json"
-```
-
-Then run the merge; it's identical on both:
-
-```bash
-mkdir -p "$(dirname "$CONFIG")" && [ -s "$CONFIG" ] || echo '{}' > "$CONFIG"
-jq '.mcpServers["hivemind-mcp-remote"] = {
-  "command": "npx",
-  "args": ["-y", "mcp-remote", "https://mcp.hivemind.hr",
-           "--header", "Authorization: Bearer hk_live_YOUR_KEY_HERE"]
-}' "$CONFIG" > "$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
-```
-
-**Windows** (PowerShell, nothing extra needed)
-
-```powershell
-$path = "$env:APPDATA\Claude\claude_desktop_config.json"
-if (!(Test-Path $path) -or !(Get-Content $path -Raw).Trim()) {
-  New-Item -ItemType File -Path $path -Force | Out-Null
-  Set-Content $path '{}'
-}
-$cfg = Get-Content $path -Raw | ConvertFrom-Json
-if (!$cfg.PSObject.Properties['mcpServers']) {
-  $cfg | Add-Member -NotePropertyName mcpServers -NotePropertyValue ([pscustomobject]@{})
-}
-$server = [pscustomobject]@{
-  command = "npx"
-  args = @("-y","mcp-remote","https://mcp.hivemind.hr","--header","Authorization: Bearer hk_live_YOUR_KEY_HERE")
-}
-$cfg.mcpServers | Add-Member -NotePropertyName "hivemind-mcp-remote" -NotePropertyValue $server -Force
-$cfg | ConvertTo-Json -Depth 10 | Set-Content $path
-```
-
-Then **fully quit and reopen Claude Desktop**; it only reads the config at startup. The server appears under the tools (🔨) icon in the composer.
-
-<Callout icon="💡" theme="info">
-  The `mcp-remote` bridge above is only needed for the API key route. If you connect with **Sign in with Hivemind**, add `https://mcp.hivemind.hr` as a custom connector instead and skip the config file entirely, on claude.ai and in Claude Desktop alike.
+<Callout icon="⚠️" theme="warn">
+  Check a staged draft before you tell the assistant to save it. Open the preview link or ask for a screenshot: saving is the step worth doing with your own eyes on the result.
 </Callout>
 
-## 5. Verify it works
+## 5. Role-aware answers
 
-Both clients should list **38 tools**. The quickest end-to-end check is to ask:
+The assistant follows your role in Hivemind, using the same rules as the app. It only offers the tools your role allows, so how many of the 56 tools you see depends on your role. A teammate who can't create pipelines in the app can't create them through the assistant either, and when you ask for something outside your role it tells you plainly that it isn't available to you rather than looking for another way round.
+
+Roles are checked live: changing someone's role, or deactivating them, reaches the assistant within a minute. See [Team Members & Roles](/docs/team-members-roles).
+
+## 6. Usage limits
+
+Limits are per company, shared by everyone's connections:
+
+- **120 tool calls per minute** in total.
+- The tools that read whole candidate records (candidate search, the skill vocabulary, full candidate details, and comparisons) also have their own budget of **30 calls per minute** and **2,000 per day**.
+
+If a limit is reached, the assistant is told how long to wait and backs off.
+
+## 7. Check it works
+
+The quickest end-to-end check is to ask your assistant:
 
 > List my Hivemind pipelines.
 
-If your pipelines come back, authentication and company resolution are both working. To check the server itself:
+If your pipelines come back, sign-in and company access are both working. To check the server itself:
 
 ```bash
-curl -fsS https://mcp.hivemind.hr/healthz   # -> ok (unauthenticated)
+curl -fsS https://mcp.hivemind.hr/healthz   # -> ok (no sign-in needed)
 ```
 
-A `401` on any other route is correct: every MCP route is auth-gated; only `/healthz` is open.
-
-## 6. What you can ask
-
-The tools cover pipelines, candidates, assessments, questions, and outreach. Some starters:
-
-Reading:
-
-- *Who's still in screening for the Backend Engineer pipeline?*
-- *How is the senior pipeline converting stage to stage?*
-- *Which candidates scored above 80 on the coding assessment?*
-- *Compare the top three candidates in the design pipeline.*
-
-Building, which stages a draft for you to approve:
-
-- *Draft a pipeline for a senior backend engineer with a resume screen and a coding assessment.*
-- *Put together a React and TypeScript assessment at medium difficulty.*
-- *Start an outreach campaign for the designers I sourced last week and add them as recipients.*
-
-<Callout icon="⚠️" theme="warn">
-  Check a staged draft before committing it. Ask the assistant to screenshot it, or open it in Hivemind. `commit_` is the point of no return, and it is the one step worth doing with your own eyes on the result.
-</Callout>
+Every other route needs a signed-in connection, so a `401` there is expected.
 
 ## What's next
 
-- Get your key set up in [Integrations Overview](/docs/integrations-overview)
+- See every connection in the [Integrations Overview](/docs/integrations-overview)
 - Automate the other direction with [Webhooks](/docs/webhooks)
 - Prefer raw HTTP? See [Public API: Getting Started](/docs/public-api-getting-started)

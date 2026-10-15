@@ -5,7 +5,7 @@ hidden: false
 
 Once you've signed up, a few minutes in **Settings** gets your workspace ready for real hiring: your personal profile, your company details, a connected mailbox and calendar, and your teammates. Open **Settings** from the sidebar and you'll see a list of tabs on the left. This guide walks through them in the order that makes sense for a new workspace.
 
-{/* 📸 Screenshot: Settings page with the left tab list, Account Settings, Workspace Settings, Team Members, Roles, Apps & Integrations, Credits, Email Services, Appearance */}
+{/* 📸 Screenshot: Settings page with the left tab list, Account Settings, Workspace Settings, Career Page, Team Members, Roles, Apps & Integrations, Credits, Email Services, Appearance */}
 
 <Callout icon="💡" theme="info">
   The tabs you see depend on your role. Everyone gets **Account Settings**; tabs like **Workspace Settings**, **Team Members**, and **Roles** appear only if your role has permission. Owners see everything. See [Settings Overview](/docs/settings-overview) for the full map.
@@ -18,26 +18,34 @@ Open **Settings → Account Settings**. This is your profile only; nothing here 
 - **Name**: update the name shown across the app, then save.
 - **Change Password**: enter your current password and a new one.
 
-Then hop over to the **Appearance** tab to make the app feel like yours: pick a **Theme** (**Light**, **Dark**, or **System**) and choose an **Accent color**.
+Then hop over to the **Appearance** tab to make the app feel like yours: pick a **Theme** (**Light**, **Dark**, or **System**) and choose an **Accent color**, either a preset swatch or any colour you like via **Custom color** (colour picker or hex code). Appearance is a personal preference saved in your browser; it doesn't change what your teammates see.
 
 ## 2. Your workspace profile
 
 Open **Settings → Workspace Settings** for the company-wide details candidates will see:
 
+- **Cover and logo**: the card at the top shows your profile the way candidates see it. Click **Upload cover** for a banner image and **Upload logo** for your logo. Your logo appears on your career page, each candidate's portal, and anywhere else your workspace shows up; your cover appears on your career page.
+- **Show cover on candidate portal**: appears once you've uploaded a cover, and puts it at the top of every candidate's portal page.
 - **Company Name**: your company's display name.
-- **Company Slug**: used in your public company URL, so pick something clean (lowercase letters, numbers, and hyphens).
-- **Company logo**: click the image at the top to upload one.
+- **Company Slug**: used in your public company URL, so pick something clean: lowercase letters, numbers, and hyphens only, up to 63 characters, not starting or ending with a hyphen.
 - **Public Company Page**: once you have a slug, this card shows your live careers page address with **Copy link** and **View live** buttons.
 
-Below that are candidate-facing switches (**Show Pipeline in Candidate View**, **Show Assessment Score**, **Show Resumatic Summary (Public Reports)**, and **Show Cheating Analysis (Public Reports)**) which control how much candidates and public report viewers see. Hit **Save Changes** when you're done. To design the careers page itself, see [Your Company Page](/docs/your-company-page).
+Below that are candidate-facing switches (**Show Pipeline in Candidate View**, **Show Assessment Score**, **Show Resumatic Summary (Public Reports)**, and **Show Cheating Analysis (Public Reports)**) which control how much candidates and public report viewers see. Hit **Save Changes** when you're done. To design the careers page itself, open the **Career Page** tab; see [Your Company Page](/docs/your-company-page).
 
-{/* 📸 Screenshot: Workspace Settings with Company Name, Company Slug, and the Public Company Page card */}
+{/* 📸 Screenshot: Workspace Settings with the cover and logo card, Company Name, Company Slug, and the Public Company Page card */}
+
+### Message variables
+
+Below your workspace details, the **Message Variables** card is where you store the values you'd otherwise retype in every message: a booking link, an office address, a referral bonus. Click **New variable**, give it a **Name** (for example *Calendar Link*), check the **Placeholder** Hivemind suggests (like `calendar_link`), enter the **Value**, and click **Create**. You can then insert it as `{calendar_link}` in outreach steps, pipeline emails and texts, and emails you write to candidates; update the value here and every message that uses it picks up the change. A placeholder can't be renamed after it's created, because messages already using it would break. See [Outreach Campaigns](/docs/outreach-campaigns#personalize-with-variables).
+
+{/* 📸 Screenshot: the Message Variables card in Workspace Settings with a calendar_link variable and the New variable button */}
 
 ## 3. Connect your email
 
 Open **Settings → Email Services** and click **Add Account**. You can connect:
 
 - **Google**: Gmail & Google Workspace, connected in a couple of clicks.
+- **Microsoft**: Outlook & Microsoft 365. Some organizations need a Microsoft admin to approve the connection once; Hivemind gives you a link to send them if so.
 - **SMTP**: any other provider, using your server details (inbox sync included).
 
 Once connected, use **Test Email Accounts** to confirm sending works. Full details in [Email Integration & Inbox](/docs/email-integration-inbox).
@@ -48,7 +56,7 @@ Once connected, use **Test Email Accounts** to confirm sending works. Full detai
 
 ## 4. Connect your calendar
 
-Interview scheduling pulls availability from your calendar. Go to the **Calendar** page in the sidebar and open its **Connections** tab, where you can connect **Google Calendar** plus a meeting provider (**Google Meet** or **Zoom**). The same Google account can cover both calendar sync and Meet. See [Calendar & Scheduling](/docs/calendar-scheduling).
+Interview scheduling pulls availability from your calendar. Go to the **Calendar** page in the sidebar and open its **Connections** tab, where you can connect **Google Calendar** plus a meeting provider (**Google Meet** or **Zoom**). The same Google account can cover both calendar sync and Meet. If your team interviews on Microsoft Teams, connect **Teams meetings** from the **Microsoft** card in **Settings → Apps & Integrations** instead. See [Calendar & Scheduling](/docs/calendar-scheduling).
 
 {/* 📸 Screenshot: Calendar → Connections tab showing the Google Calendar, Google Meet, and Zoom cards */}
 

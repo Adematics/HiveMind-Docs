@@ -26,11 +26,21 @@ The report leads with an **Overall Score** out of 100 (a weighted average of eve
 The **Questions & Answers** section breaks down every response:
 
 - **Multiple choice**: marked **Correct Answer** or **Incorrect Answer**, showing the selected and correct options.
-- **Open-ended**: the written **Response** with an **AI Score** and an **AI Grading Justification** explaining the mark against the rubric.
-- **Video**: the **Video Response** plays right in the report, with its AI score and justification.
+- **Open-ended**: the written **Response** with an **AI Score** and an **AI Grading Justification** explaining the mark against the rubric. Real-time open-ended answers show the **Final Response** plus the full **Conversation History** with the AI interviewer.
+- **Video**: the **Video Response** plays right in the report, followed by the **Transcript** the grader read (collapsed until you click **Show**), then the AI score and justification.
 - **Coding**: the **Submitted Code** in a read-only editor with the language used; live coding also includes the **Conversation History** with the AI assistant, and a **View Session Recording** link when available.
 
 Each scored question has its own **Edit Score** option. Overridden scores are flagged with an **Edited** pill so your team knows a human adjusted them. Answers that couldn't be auto-graded are called out with the reason. For direct (non-pipeline) candidates, a **Retake Assessment** button lets you invite a fresh attempt.
+
+### See what the grader heard
+
+Video answers are graded from a transcript of what the candidate said, not from the video itself. The **Transcript** under each video answer is exactly that text, so you can check a score against the words that produced it without rewatching the recording. The grader also sees the question itself, and its justification walks through the rubric criteria one by one.
+
+If a recording has no speech in it, the transcript reads **No speech was detected in this recording.** and the answer scores 0 rather than getting a grade invented from silence. A silent, off-topic, or "I don't know" answer earns no points on any rubric criterion.
+
+<Callout icon="💡" theme="info">
+  Video answers graded before transcripts were stored don't have a **Transcript** section. Their score and justification are unchanged.
+</Callout>
 
 ## Integrity Analysis
 
@@ -42,7 +52,7 @@ Beside the score sits **Integrity Analysis**: behavioral pattern detection, summ
 
 ## How results drive stage progression
 
-The overall score is stored on the candidate, and a decision node placed after the assessment stage branches on it: advance high scorers to an interview, reject below your threshold, or route mid-range candidates to manual review. You set those conditions yourself in the pipeline builder; there is no built-in pass mark. Manual score overrides count, so correcting a grade can change where a candidate goes next. See [Managing Candidates in a Pipeline](/docs/managing-candidates-in-a-pipeline).
+The overall score is stored on the candidate, and a **Choice** step placed after the assessment step branches on it: advance high scorers to an interview, reject below your threshold, or route mid-range candidates to manual review. You set those conditions yourself in the pipeline builder; there is no built-in pass mark. Manual score overrides count, so correcting a grade can change where a candidate goes next. See [Managing Candidates in a Pipeline](/docs/managing-candidates-in-a-pipeline).
 
 <Callout icon="💡" theme="info">
   Cognitive test results show an overall score with **Reasoning**, **Memory**, and **Verbal** components and percentiles; personality reports include role-fit ratings, strengths, challenges, and **Evidence from Assessment** drawn from the candidate's own answers. See [Assessment Types](/docs/assessment-types).

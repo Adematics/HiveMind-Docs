@@ -8,7 +8,7 @@ Settings is the control room for your Hivemind workspace: your personal account,
 {/* 📸 Screenshot: Settings page with the left sidebar showing all tabs (Account Settings, Workspace Settings, Career Page, Team Members, Roles, Apps & Integrations, Credits, Email Services, Appearance) */}
 
 <Callout icon="💡" theme="info">
-  The tabs you see depend on your role. **Account Settings** is visible to everyone, but tabs like **Workspace Settings**, **Team Members**, **Roles**, **Credits**, and **Appearance** only appear if your role has permission to manage them. Owners see everything. If a tab is missing, ask a workspace Owner. See [Team Members & Roles](/docs/team-members-roles).
+  The tabs you see depend on your role. **Account Settings** is visible to everyone, but tabs like **Workspace Settings**, **Career Page**, **Team Members**, **Roles**, **Credits**, and **Appearance** only appear if your role has permission to see them. Owners see everything. If a tab is missing, ask a workspace Owner. See [Team Members & Roles](/docs/team-members-roles).
 </Callout>
 
 ## Account Settings
@@ -17,7 +17,9 @@ Your personal profile: update your **Name** and use **Change Password** to set a
 
 ## Workspace Settings
 
-Your company-wide profile: set the **Company Name** and the **Company Slug**, which is used in your public company URL, the address candidates see when they visit your careers presence. This is also where your company image lives. Learn how it all appears to candidates in [Your Company Page](/docs/your-company-page).
+Your company-wide profile: set the **Company Name** and the **Company Slug**, which is used in your public company URL, the address candidates see when they visit your careers presence. This is also where your company logo and cover image live, along with the **Show cover on candidate portal** switch. Learn how it all appears to candidates in [Your Company Page](/docs/your-company-page).
+
+Further down the same tab, **Message Variables** holds your company's reusable message values: define something like a booking link once, then insert it as `{calendar_link}` in any outreach step or pipeline email. See [Outreach Campaigns](/docs/outreach-campaigns#personalize-with-variables).
 
 ## Career Page
 
@@ -33,11 +35,11 @@ Manage what each role can do. Hivemind ships with system roles, and you can buil
 
 ## Apps & Integrations
 
-Connect the tools Hivemind works alongside: Google (Calendar and Meet), LinkedIn and WhatsApp for outreach, Twilio for phone and SMS, your own OpenAI key, and ATS connections to Ashby and Greenhouse. This tab is also home to your **API keys** and **webhooks** for developers, and to **connected apps**: the AI assistants authorized against your workspace over MCP, each revocable from here. See [Hivemind MCP Server](/docs/hivemind-mcp-server). Start with the [Integrations Overview](/docs/integrations-overview), or jump to [Public API](/docs/public-api-getting-started) and [Webhooks](/docs/webhooks).
+A searchable directory of everything Hivemind connects to, grouped by category, with your connected apps listed above the ones still available and any connection that needs attention flagged at the top. It covers Google (Calendar, Meet, and Gmail), Microsoft (Outlook mailboxes, Teams meetings, and Teams channel notifications), Zoom, LinkedIn and WhatsApp for outreach, Slack and ClickUp channels for your pipelines, Twilio for phone and SMS, your own OpenAI key, Power BI, and ATS connections such as Ashby and Greenhouse. This tab is also home to your **API keys** and **webhooks** for developers, and to **connected apps**: the AI assistants authorized against your workspace over MCP, each revocable from here. See [Hivemind MCP Server](/docs/hivemind-mcp-server). Start with the [Integrations Overview](/docs/integrations-overview), or jump to [Public API](/docs/public-api-getting-started) and [Webhooks](/docs/webhooks).
 
 ## Credits
 
-Your workspace's fuel gauge. See your **Current Credits** balance, compare **Subscription Plans**, top up under **Buy Credits**, and audit every charge in **Transaction History**. Everything you need to know is in [Credits & Billing](/docs/credits-billing).
+Your workspace's fuel gauge. See your **Current Credits** balance and **Current Subscription**, top up under **Buy Credits**, and audit every charge in **Transaction History**. Everything you need to know is in [Credits & Billing](/docs/credits-billing).
 
 <Callout icon="⚠️" theme="warn">
   The **Credits** tab is only visible to roles with billing permission. If your AI stages stop running and you can't see this tab, an Owner may need to check the balance.
@@ -45,13 +47,15 @@ Your workspace's fuel gauge. See your **Current Credits** balance, compare **Sub
 
 ## Email Services
 
-Connect the mailboxes Hivemind sends and receives candidate email through. Click **Add Account** to connect Gmail or any provider via IMAP/SMTP, verify the connection, and you're set. Without a connected mailbox, automated candidate emails won't go out. See [Email Integration & Inbox](/docs/email-integration-inbox).
+Connect the mailboxes Hivemind sends and receives candidate email through. Click **Add Account** to connect Gmail, Microsoft 365 Outlook, or any provider via IMAP/SMTP, verify the connection, and you're set. Without a connected mailbox, automated candidate emails won't go out. See [Email Integration & Inbox](/docs/email-integration-inbox).
 
 ## Appearance
 
-Make Hivemind look the way your team likes: pick a **Theme** (light or dark) and an **Accent color** that sets the overall tone of the interface for your workspace.
+Make Hivemind look the way you like: pick a **Theme** (**Light**, **Dark**, or **System**) and an **Accent color**. Choose one of the preset swatches, or open **Custom color** to pick any colour with the colour picker or type a hex code (like `#4F46E5`) to match your brand. Buttons, links, highlights, and the sidebar follow your accent in both light and dark mode.
 
-{/* 📸 Screenshot: Appearance tab showing the Theme picker and Accent color swatches */}
+These are personal preferences: they change how Hivemind looks for you on this browser, not for the rest of your team. Your public career page has its own accent colour, set in the page builder (see [Your Company Page](/docs/your-company-page)).
+
+{/* 📸 Screenshot: Appearance tab showing the Theme picker, the Accent color swatches, and the Custom color picker with a hex field */}
 
 ## What's next
 

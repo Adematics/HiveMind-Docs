@@ -5,15 +5,17 @@ hidden: false
 
 A DISC profile tells you how a candidate prefers to work: how directly they push, how much they lean on other people, how they handle pace and change, and how closely they stick to rules and detail. It is a behavioural profile, not an ability test, and it is best read alongside the assessments that measure whether someone can do the job.
 
-Hivemind runs DISC as a **Personality** step inside a pipeline. The candidate answers **28 forced-choice blocks**, picking what is most and least like them in each one, and the profile is scored the moment they submit.
+Hivemind runs DISC as a **Personality Test** step inside a pipeline. The candidate answers **28 forced-choice blocks**, picking what is most and least like them in each one, and the profile is scored the moment they submit.
 
 ## 1. Add it to a pipeline
 
-Drag a **Personality** node onto the pipeline canvas from the **Automated Assessment** section of the palette, then set its variant to **DISC**. Left on the default, the node runs Hivemind's original work-style questionnaire instead, so the variant is the setting that matters here.
+Drag a **Personality Test** step onto the pipeline canvas from the **Automated Assessment** section of the palette, then pick the **DISC Profile** variant. Left on the default, **Work Style Interview**, the step runs Hivemind's conversational AI work-style interview instead, so the variant is the setting that matters here. DISC takes candidates 6–8 minutes, needs no microphone, and works on any device.
 
-Like the other assessment steps, the node emails the candidate their own link and holds the pipeline until they respond. **Smart Follow-Up Reminders** work the same way as elsewhere: up to three nudges by email, SMS, or both.
+The variant locks once a candidate has answered, because switching afterwards would mix two incompatible kinds of result on one step. If you need the other variant, add a new step.
 
-{/* 📸 Screenshot: the Personality node configuration panel with the DISC variant selected */}
+Like the other assessment steps, it emails the candidate their own link and holds the pipeline until they respond. **Smart follow-up reminders** work the same way as elsewhere: up to three nudges by email, SMS, or both.
+
+{/* 📸 Screenshot: the Personality Test step settings with the DISC Profile variant selected */}
 
 ## 2. What the candidate sees
 
@@ -55,9 +57,13 @@ A profile with no usable answers reports no primary dimension at all rather than
   Scoring is arithmetic over the candidate's own picks. No model is involved anywhere in the scoring path, so the same answers always produce the same profile.
 </Callout>
 
-## 5. What it costs
+## 5. Route candidates by profile
 
-A DISC profile is billed from your credit balance like the other assessment steps. Check the current rate against your balance in [Credits & Billing](/docs/credits-billing) before you add it to a high-volume pipeline.
+To send candidates down different branches by style, add a **Choice** step after the Personality Test step and use the **DISC profile** field. It holds the candidate's leading dimension (D, I, S, or C); choose **is any of** to match several. There is deliberately no pass/fail or fit verdict to branch on: a working style is not a hiring decision, so the full profile stays on the report for a person to read. A submission that could not be scored has no leading style, which you can catch with **is empty**.
+
+## 6. What it costs
+
+A Personality Test step costs **80 credits** per candidate, whichever variant it runs, billed from your credit balance like the other assessment steps. See [Credits & Billing](/docs/credits-billing) for how the balance works before you add it to a high-volume pipeline.
 
 ## What's next
 

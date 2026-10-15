@@ -26,11 +26,11 @@ From the header you can open the **Question Bank** or click **New Assessment** t
 
 ## How assessments plug into pipelines
 
-Inside the pipeline builder, drag in the **Automated Assessment** node. Its **Assessment Configuration** panel has just two fields: a **Node Name** and an **Assessment** picker (**Search for an assessment**, or use the **Create one** link to build a fresh one). See the [Pipeline Nodes Reference](/docs/pipeline-nodes-reference) for where the node fits among the other stages.
+Inside the pipeline builder, drag in the **Skills Assessment** step from the **Automated Assessment** section of the palette. Its settings are short: a **Node name** under **Step details**, and an **Assessment** picker (**Search for an assessment**, or use the **Create an assessment** link to build a fresh one). Once you pick one, a preview of it appears with a shortcut to edit it. See the [Pipeline Nodes Reference](/docs/pipeline-nodes-reference) for where the step fits among the others.
 
-When a candidate reaches the stage, Hivemind sends them the assessment, waits for their submission, grades it, and stores the score on the candidate. The node itself has no fixed pass mark. You decide what happens next by adding a decision node after it that branches on the assessment score (for example, score ≥ 70 advances to interview, otherwise rejects). The panel also offers a one-time **Compose Email** nudge for candidates who haven't finished yet.
+When a candidate reaches the step, Hivemind sends them the assessment, waits for their submission, grades it, and stores the score on the candidate. The step itself has no fixed pass mark. You decide what happens next by adding a **Choice** step after it that branches on the assessment score (for example, score ≥ 70 advances to interview, otherwise rejects). While some candidates still haven't finished, the panel also offers a one-time **Compose Email** nudge under **Manual outreach**.
 
-{/* 📸 Screenshot: The Assessment Configuration panel in the pipeline builder with an assessment selected */}
+{/* 📸 Screenshot: The Skills Assessment step settings in the pipeline builder with an assessment selected */}
 
 ## AI evaluation, in a nutshell
 

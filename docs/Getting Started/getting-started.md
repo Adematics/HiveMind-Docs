@@ -6,6 +6,8 @@ hidden: false
 <Cards>
   <Card title="Quick Start" href="/docs/quick-start" icon="fa-duotone fa-rocket-launch">From signup to your first candidate in minutes</Card>
 
+  <Card title="Post a Job" href="/docs/post-a-job" icon="fa-duotone fa-bullhorn">Create, publish, and share a job in minutes</Card>
+
   <Card title="Pipelines" href="/docs/pipelines-overview" icon="fa-duotone fa-diagram-project">Build automated hiring pipelines with AI</Card>
 
   <Card title="API Reference" href="/reference" icon="fa-duotone fa-code-simple">Explore endpoints and build your integration</Card>
@@ -16,11 +18,19 @@ hidden: false
 ## What's New
 
 <Cards>
+  <Card title="Ashby Sync" href="/docs/ashby-sync" icon="fa-duotone fa-arrows-rotate">Two-way sync of applicants and results with Ashby</Card>
+
+  <Card title="Slack & ClickUp" href="/docs/slack-and-clickup" icon="fa-duotone fa-comments">A channel for every active pipeline</Card>
+
+  <Card title="Microsoft 365" href="/docs/microsoft-365" icon="fa-brands fa-microsoft">Outlook inbox, Teams meetings, and Teams notifications</Card>
+
+  <Card title="Candidate Lists" href="/docs/candidate-lists" icon="fa-duotone fa-list-check">Group candidates into named lists</Card>
+
   <Card title="Dashboards" href="/docs/dashboards-overview" icon="fa-duotone fa-chart-line">Pipeline conversion, interviews, and credits at a glance</Card>
 
   <Card title="DISC Personality Profiles" href="/docs/disc-personality-profiles" icon="fa-duotone fa-brain">See how candidates prefer to work</Card>
 
-  <Card title="Hivemind MCP Server" href="/docs/hivemind-mcp-server" icon="fa-duotone fa-robot">Use Hivemind from Claude, ChatGPT, or Copilot</Card>
+  <Card title="Hivemind MCP Server" href="/docs/hivemind-mcp-server" icon="fa-duotone fa-robot">Use Hivemind from Claude, ChatGPT, or any MCP app</Card>
 
   <Card title="Public API" href="/docs/public-api-getting-started" icon="fa-duotone fa-code">Connect your own systems with the REST API</Card>
 
