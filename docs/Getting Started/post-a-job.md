@@ -52,7 +52,7 @@ Once active, the job shows up in three places:
 
 - **Your careers page.** The **Open Positions** section of your [company page](/docs/your-company-page) lists every active pipeline. Each role has its own job page with **About this role** (your description), **What to expect** (the steps applicants will go through), an **Apply now** button, **Remind me later**, and **Copy link to this job**.
 - **The application page.** **Apply now** leads to a form-first page: your logo, the job title and key facts, then the form, so candidates can apply from the first screen. A **View job details** link takes them back to the full job page.
-- **Anywhere you share the link.** Copy the apply link with **Application Link** in the pipeline's **Manage** menu or the row actions on the **My Pipelines** table, the **Application link** row on the Start card, or the share icon next to the pipeline's name. Post it on job boards, social, or in an email.
+- **Anywhere you share the link.** Copy the apply link with **Application Link** in the pipeline's **Manage** menu or the row actions on the **My Pipelines** table, the **Application link** row on the Start card, or the share icon next to the pipeline's name. Post it on job boards, social, or in an email. For Monster and Dice, see [Post a Job on Monster and Dice](/docs/post-on-monster-and-dice).
 
 {/* 📸 Screenshot: a role's job page on the careers site with About this role, What to expect, and the Apply now button */}
 
